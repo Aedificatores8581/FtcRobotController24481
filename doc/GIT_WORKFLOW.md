@@ -1,13 +1,15 @@
-# Git Workflow — Team Cobalt Chaos
+# Git Workflow - Team Cobalt Chaos
 
-How we share code without overwriting each other. Read Part 1 once, then live in Part 3.
+- How we share code without overwriting each other. 
+- Read Part 1 once, then live in Part 3.
 
 Run these in a terminal. Android Studio has one built in: **View > Tool Windows >
 Terminal** (`Alt+F12`). It opens already inside the project folder.
 
 ---
 
-## Part 1 — Set up your computer (once)
+## Part 1: Set up your computer (once)
+Skip this if you already have Git and the GitHub CLI installed.
 
 ### Install the tools
 
@@ -58,7 +60,8 @@ touches looks 100% changed to the other, and you'd get conflicts on lines nobody
 
 ---
 
-## Part 2 — Get the code (once per computer)
+## Part 2: Get the code (once per computer)
+Skip this if you already have the code on your computer.
 
 ```bash
 git clone https://github.com/Aedificatores8581/FtcRobotController24481.git
@@ -67,7 +70,7 @@ git remote -v
 ```
 
 That last command must print `Aedificatores8581`. If it prints `FIRST-Tech-Challenge`
-you cloned FIRST's original repo instead of our copy — you can't push to that one. Fix it
+you cloned FIRST's original repo instead of our copy. You can't push to that one. Fix it
 without re-cloning:
 
 ```bash
@@ -91,7 +94,7 @@ where it came from, which is how we pull in FIRST's yearly SDK updates.
 
 ---
 
-## Part 3 — The daily loop
+## Part 3: The daily loop
 
 Every feature follows the same cycle.
 
@@ -104,21 +107,23 @@ git pull
 git checkout -b arm-pid
 ```
 
-Write your code in Android Studio.
+Here you are on a clean branch, ready to start your feature. Write your code in Android Studio, make changes, etc.
+
+When finished with your feature, follow these steps:
 
 ```bash
 # 3. check what changed
 git status
 
-# 4. commit
-git add .
+# 4. add your changes by pointing to what files, then commit them with a reflective message
+git add TeamCode/*
 git commit -m "Add PID control to the arm"
 
 # 5. push (first time on this branch)
 git push -u origin arm-pid
 ```
 
-Keep working — from now on it's just three commands:
+Keep working. From now on it's just three commands:
 
 ```bash
 git add .
@@ -126,7 +131,7 @@ git commit -m "Tune arm kP"
 git push
 ```
 
-When the feature is done, open a pull request (Part 4). After it's merged:
+When the feature is done or you're done modifying, open a pull request (Part 4). After it's merged:
 
 ```bash
 git checkout master
@@ -141,11 +146,10 @@ arguments.
 
 Name branches after the feature, not yourself:
 
-✅ `arm-pid`, `auto-red-left`, `intake-subsystem`
-❌ `test`, `ethan2`, `my-branch`
+good -  `arm-pid`, `auto-red-left`, `intake-subsystem`, `bug-fix-driver`, `odometry-add-strafing`
+bad - `test`, `ethan2`, `my-branch`, `hi`, `new`
 
-Two people both making branches named after themselves is how you end up with three
-branches nobody can tell apart.
+Be intentional with your branch naming. It should reflect what you are working on.
 
 ### If your branch lives more than a day or two
 
@@ -161,12 +165,16 @@ git push
 
 Merging often means small conflicts. Merging once at the end means a big one.
 
+**You should always try to sync your branch with `master` frequently, like at the start of each work session.**
+
 ---
 
-## Part 4 — Pull requests
+## Part 4: Pull requests
 
 A pull request asks for your branch to be merged into `master`. The other programmer
-reviews it first — that's how we catch problems before they reach the robot.
+reviews it first before it gets merged into `master`. This allows for code review and catching potential issues early.
+
+You can also create a pull request in the UI after pushing your branch to GitHub with changes. It should display a prompt to create a pull request for your branch. **Ensure you point the base to `master` in our repository, not the upstream repository.**
 
 ```bash
 gh pr create --base master --fill
@@ -174,8 +182,8 @@ gh pr create --base master --fill
 
 It prints a link. Send it to your teammate.
 
-> ⚠️ Use that command, not the GitHub website. Because our repo is a fork, the website
-> defaults the destination to **FIRST-Tech-Challenge** — you'd be publicly proposing our
+>  Use that command, not the GitHub website. Because our repo is a fork, the website
+> defaults the destination to **FIRST-Tech-Challenge**, you'd be publicly proposing our
 > robot code to the people who write the FTC SDK. `gh pr create` always targets our repo.
 
 Once it's approved:
@@ -188,7 +196,7 @@ Then tell your teammate so they can `git checkout master` and `git pull`.
 
 ---
 
-## Part 5 — When something goes wrong
+## Part 5: When something goes wrong
 
 **Worked on master by accident (not pushed yet):**
 
@@ -197,13 +205,13 @@ git branch arm-pid      # copies your commits onto a new branch
 git checkout arm-pid
 ```
 
-**Undo the last commit, keep the code:**
+**Undo the last commit, keep the code. This is useful if you committed too early:**
 
 ```bash
 git reset --soft HEAD~1
 ```
 
-**Throw away changes to one file:**
+**Throw away changes to one file. If you want to discard your edits to a specific file:**
 
 ```bash
 git checkout -- TeamCode/src/main/java/org/firstinspires/ftc/teamcode/YourFile.java
@@ -228,10 +236,10 @@ common ones delete work permanently.
 
 ---
 
-## Part 6 — Rules
+## Part 6: Rules
 
 1. **Never commit directly to `master`.** Branch first, always.
-2. **Our code goes in `TeamCode/`.** Never edit anything inside `FtcRobotController/` —
+2. **Our code goes in `TeamCode/`.** Never edit anything inside `FtcRobotController/` -
    those are FIRST's sample opmodes. Copy a sample into `TeamCode` if you want to use it.
    This is what keeps SDK updates from turning into a mess of conflicts.
 3. **Split work by subsystem.** Two people editing one opmode at the same time produces
@@ -241,7 +249,37 @@ common ones delete work permanently.
 
 ---
 
-## Part 7 — Cheat card
+## Part 7: ADB (Android Debug Bridge) Usage
+
+If you want to use ADB to interact with your robot, here are some common commands. Ensure ADB is installed and available in your system's PATH.
+
+```bash
+# List connected devices
+adb devices
+
+# Connect to a device over Wi-Fi
+adb connect DEVICE_IP
+
+# Disconnect from a device over Wi-Fi
+adb disconnect DEVICE_IP
+
+# Install an APK on the device
+adb install path/to/your.apk
+
+# Uninstall an app from the device
+adb uninstall com.your.package.name
+
+# Start a shell on the device
+adb shell
+
+# Pull a file from the device
+adb pull /sdcard/path/to/file local/path
+
+# Push a file to the device
+adb push local/path /sdcard/path/to/file
+```
+
+## Part 7: Cheat card
 
 | Goal | Command |
 |---|---|
@@ -256,10 +294,13 @@ common ones delete work permanently.
 | Which branch am I on? | `git branch` |
 | Recent history | `git log --oneline -10` |
 | Delete a merged branch | `git branch -d NAME` |
+| Disconnect from a device over Wi-Fi | `adb disconnect DEVICE_IP` |
+| Connect to a device over Wi-Fi | `adb connect DEVICE_IP` |
+
 
 ---
 
-## For mentors — updating the FTC SDK
+## For **mentors**: Updating the FTC SDK
 
 FIRST ships a new SDK most seasons (v11.2 in July, v12.0 in September). One person does
 this, then the students pull.
