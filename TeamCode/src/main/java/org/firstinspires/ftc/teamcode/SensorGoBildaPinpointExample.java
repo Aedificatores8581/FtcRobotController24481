@@ -211,22 +211,32 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
         }
    }
    void drive_1_foot(Pose2D pos) {
-if (pos.getY(DistanceUnit.INCH)>=-12) {
-       // Send calculated power to wheels
-       frontLeftDrive.setPower(0.3);
-       frontRightDrive.setPower(0.3);
-       backLeftDrive.setPower(0.3);
-       backRightDrive.setPower(0.3); }
-else {
-    frontLeftDrive.setPower(0);
-    frontRightDrive.setPower(0);
-    backLeftDrive.setPower(0);
-    backRightDrive.setPower(0);
-       }
+        if (pos.getY(DistanceUnit.INCH) >= -12) {
+            // Send calculated power to wheels
+            frontLeftDrive.setPower(0.3);
+            frontRightDrive.setPower(0.3);
+            backLeftDrive.setPower(0.3);
+            backRightDrive.setPower(0.3);
+        } else {
+            frontLeftDrive.setPower(0);
+            frontRightDrive.setPower(0);
+            backLeftDrive.setPower(0);
+            backRightDrive.setPower(0);
+            sleep(5000);
 
-
-
-
+            boolean retrace = false;
+            if (pos.getY(DistanceUnit.INCH) == -12) {
+                // Send calculated power to wheels
+                frontLeftDrive.setPower(0.2);
+                frontRightDrive.setPower(0.4);
+                backLeftDrive.setPower(0.3);
+                backRightDrive.setPower(0.4);
+                retrace = true;
+            }
+            if (retrace) {
+                // retrace logic
+            }
+        }
     }
 
 }
