@@ -66,6 +66,7 @@ public class basic_drive_train_one_zero_zero extends LinearOpMode {
                 frontRightPower /= max;
                 backLeftPower   /= max;
                 backRightPower  /= max;
+                1
             }
 
             FL.setPower(frontLeftPower);
