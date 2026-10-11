@@ -22,10 +22,10 @@ public class basic_drive_train_one_zero_zero extends LinearOpMode {
 
         // Initialize the hardware variables. Note that the strings used here must correspond
         // to the names assigned during the robot configuration step on the DS or RC devices.
-        FL = hardwareMap.get(DcMotor.class, "front_left_drive");
-        BL = hardwareMap.get(DcMotor.class, "back_left_drive");
-        FR = hardwareMap.get(DcMotor.class, "front_right_drive");
-        BR = hardwareMap.get(DcMotor.class, "back_right_drive");
+        FL = hardwareMap.get(DcMotor.class, "FL");
+        BL = hardwareMap.get(DcMotor.class, "BL");
+        FR = hardwareMap.get(DcMotor.class, "FR");
+        BR = hardwareMap.get(DcMotor.class, "BR");
 
         FL.setDirection(DcMotor.Direction.REVERSE);
         BL.setDirection(DcMotor.Direction.REVERSE);
