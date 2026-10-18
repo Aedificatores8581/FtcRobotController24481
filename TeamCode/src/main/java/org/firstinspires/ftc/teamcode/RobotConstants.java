@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 /*
@@ -19,6 +20,7 @@ public final class RobotConstants {
     public static final String FRONT_RIGHT_MOTOR = "FR";
     public static final String BACK_RIGHT_MOTOR  = "BR";
     public static final String PINPOINT          = "pinpoint";
+    public static final String IMU               = "imu"; // the Control Hub's built-in gyro
 
     // ---- Motor directions. Flip one if that wheel spins the wrong way when driving forward. ----
     public static final DcMotor.Direction FRONT_LEFT_DIRECTION  = DcMotor.Direction.REVERSE;
@@ -48,4 +50,15 @@ public final class RobotConstants {
     public static final double DRIVE_POWER  = 0.3;
     public static final double STRAFE_POWER = 0.3;
     public static final double TURN_POWER   = 0.25;
+
+    // ---- Control Hub orientation on the robot (used by field-relative drive) ----
+    // Look at how the hub is mounted: which way the REV logo faces, and which way the USB ports face.
+    public static final RevHubOrientationOnRobot.LogoFacingDirection HUB_LOGO_DIRECTION =
+            RevHubOrientationOnRobot.LogoFacingDirection.UP;
+    public static final RevHubOrientationOnRobot.UsbFacingDirection HUB_USB_DIRECTION =
+            RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
+
+    // ---- TeleOp ----
+    // Multiplier applied to all drive power while slow mode is on (0.0 to 1.0).
+    public static final double SLOW_MODE_SCALE = 0.4;
 }
