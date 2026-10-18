@@ -4,6 +4,7 @@ import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit;
@@ -15,6 +16,12 @@ import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit
  * lines there to change what the robot does. Names, directions, and power levels
  * live in RobotConstants.java.
  *
+ * Logging: RobotLog lines are tagged "SimpleAuto". To watch them live in a terminal:
+ *     adb logcat -s SimpleAuto
+ * or type SimpleAuto in the Logcat filter box in Android Studio. To save to a file:
+ *     adb logcat -s SimpleAuto > ~/robot_log.txt
+ * Levels: RobotLog.vv (verbose), dd (debug), ii (info), ww (warn), ee (error).
+ *
  * Distances are in inches, angles in degrees. Negative = opposite direction:
  *     driveForward(-12)  drives backward 12 inches
  *     turnLeft(-90)      turns right 90 degrees
@@ -22,19 +29,24 @@ import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit
 @Autonomous(name = "Simple Auto", group = "Auto")
 public class SimpleAuto extends LinearOpMode {
 
+    private static final String TAG = "SimpleAuto";
+
     private DcMotor frontLeft, backLeft, frontRight, backRight;
     private GoBildaPinpointDriver pinpoint;
 
     @Override
     public void runOpMode() {
         // ---- INIT: runs when INIT is pressed. Robot must be still (Pinpoint calibrates here). ----
+        RobotLog.ii(TAG, "INIT: setting up hardware");
         initHardware();
+        RobotLog.ii(TAG, "INIT done. Pinpoint status: %s", pinpoint.getDeviceStatus());
 
         telemetry.addData("Status", "Ready. Press START.");
         telemetry.addData("Pinpoint", pinpoint.getDeviceStatus());
         telemetry.update();
 
         waitForStart();
+        RobotLog.ii(TAG, "START pressed, running routine");
 
         // ---- ROUTINE: runs once, top to bottom, after START. Edit this list. ----
         driveForward(12);
@@ -43,6 +55,7 @@ public class SimpleAuto extends LinearOpMode {
         // driveForward(-12);
 
         // ---- DONE ----
+        RobotLog.ii(TAG, "Routine finished");
         telemetry.addData("Status", "Done");
         telemetry.update();
         while (opModeIsActive()) {
@@ -80,6 +93,7 @@ public class SimpleAuto extends LinearOpMode {
     /** Drive straight forward (negative = backward). */
     private void driveForward(double inches) {
         double p = Math.signum(inches) * RobotConstants.DRIVE_POWER;
+        RobotLog.ii(TAG, "driveForward(%.1f) power=%.2f", inches, p);
         setPowers(p, p, p, p);
         waitForDistance(Math.abs(inches), "Forward " + inches + " in");
         stopMotors();
@@ -89,6 +103,7 @@ public class SimpleAuto extends LinearOpMode {
     private void strafeLeft(double inches) {
         double p = Math.signum(inches) * RobotConstants.STRAFE_POWER;
         // Mecanum strafe left: front-left & back-right roll backward, the other two roll forward.
+        RobotLog.ii(TAG, "strafeLeft(%.1f) power=%.2f", inches, p);
         setPowers(-p, p, p, -p);
         waitForDistance(Math.abs(inches), "Strafe " + inches + " in");
         stopMotors();
@@ -98,6 +113,7 @@ public class SimpleAuto extends LinearOpMode {
     private void turnLeft(double degrees) {
         double p = Math.signum(degrees) * RobotConstants.TURN_POWER;
         // Left side backward, right side forward = counter-clockwise.
+        RobotLog.ii(TAG, "turnLeft(%.1f) power=%.2f", degrees, p);
         setPowers(-p, -p, p, p);
 
         pinpoint.update();
@@ -106,7 +122,10 @@ public class SimpleAuto extends LinearOpMode {
         while (opModeIsActive()) {
             pinpoint.update();
             double turned = pinpoint.getHeading(UnnormalizedAngleUnit.DEGREES) - startHeading;
-            if (Math.abs(turned) >= Math.abs(degrees)) break;
+            if (Math.abs(turned) >= Math.abs(degrees)) {
+                RobotLog.ii(TAG, "turnLeft done: turned %.1f of %.1f deg", turned, Math.abs(degrees));
+                break;
+            }
             report("Turn " + degrees + " deg", Math.abs(degrees), Math.abs(turned));
         }
         stopMotors();
@@ -140,7 +159,11 @@ public class SimpleAuto extends LinearOpMode {
             double dx = pinpoint.getPosX(DistanceUnit.INCH) - startX;
             double dy = pinpoint.getPosY(DistanceUnit.INCH) - startY;
             double traveled = Math.hypot(dx, dy);
-            if (traveled >= inches) break;
+            if (traveled >= inches) {
+                // One line per move, not per loop pass: logging every iteration floods Logcat.
+                RobotLog.ii(TAG, "%s done: traveled %.2f of %.1f in", label, traveled, inches);
+                break;
+            }
             report(label, inches, traveled);
         }
     }
