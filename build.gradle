@@ -8,6 +8,7 @@ buildscript {
     repositories {
         mavenCentral()
         google()
+        maven { url = 'https://maven.brott.dev/' }
     }
 }
 
@@ -23,9 +24,11 @@ allprojects {
     repositories {
         mavenCentral()
         google()
+        maven { url = 'https://maven.brott.dev/' }
     }
 }
 
 repositories {
     mavenCentral()
+    maven { url = 'https://maven.brott.dev/' }
 }
