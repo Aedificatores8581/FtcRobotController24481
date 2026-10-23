@@ -1,6 +1,9 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
@@ -21,9 +24,14 @@ public class Robot {
     public final Intake intake;
     public final Vision vision;
 
+    private final Telemetry telemetry;
     private final Subsystem[] subsystems;
+    private final boolean[] initOk; // false if a subsystem failed to init (e.g. device not configured)
 
-    public Robot(HardwareMap hardwareMap, Telemetry telemetry) {
+    public Robot(HardwareMap hardwareMap, Telemetry opModeTelemetry) {
+        // One telemetry that shows on the Driver Station AND FTC Dashboard.
+        telemetry = new MultipleTelemetry(opModeTelemetry, FtcDashboard.getInstance().getTelemetry());
+
         drive    = new Drivetrain(hardwareMap, telemetry);
         odo      = new Odometry(hardwareMap, telemetry);
         launcher = new Launcher(hardwareMap, telemetry);
@@ -31,18 +39,41 @@ public class Robot {
         vision   = new Vision(hardwareMap, telemetry);
 
         subsystems = new Subsystem[] {drive, odo, launcher, intake, vision};
+        initOk = new boolean[subsystems.length];
     }
 
+    /**
+     * A subsystem whose hardware is missing is skipped (and reported) instead of crashing the OpMode.
+     * Don't call methods on a skipped subsystem, or you'll get a NullPointerException.
+     */
     public void init() {
-        for (Subsystem s : subsystems) s.init();
+        RobotLog.ii("Robot", "init");
+        for (int i = 0; i < subsystems.length; i++) {
+            String name = subsystems[i].getClass().getSimpleName();
+            try {
+                subsystems[i].init();
+                initOk[i] = true;
+            } catch (Exception e) {
+                initOk[i] = false;
+                RobotLog.ee("Robot", e, name + " failed to init - skipped");
+                telemetry.addData("WARNING", name + " skipped: " + e.getMessage());
+            }
+        }
+        telemetry.update();
     }
 
     /** Call once per loop. */
     public void update() {
-        for (Subsystem s : subsystems) s.update();
+        for (int i = 0; i < subsystems.length; i++) {
+            if (initOk[i]) subsystems[i].update();
+        }
+        telemetry.update(); // only Robot calls this, once per loop
     }
 
     public void stop() {
-        for (Subsystem s : subsystems) s.stop();
+        RobotLog.ii("Robot", "stop");
+        for (int i = 0; i < subsystems.length; i++) {
+            if (initOk[i]) subsystems[i].stop();
+        }
     }
 }

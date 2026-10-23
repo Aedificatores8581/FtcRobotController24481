@@ -20,11 +20,16 @@ public final class RobotConstants {
     public static final String INTAKE_MOTOR      = "intake";
 
     // ---- Odometry (TODO: measure) ----
-    public static final double PINPOINT_X_OFFSET_MM = 0;
-    public static final double PINPOINT_Y_OFFSET_MM = 0;
+    public static final double PINPOINT_X_OFFSET_MM = 105; // from last year's robot - TODO re-measure on the new one
+    public static final double PINPOINT_Y_OFFSET_MM = 38;  // from last year's robot - TODO re-measure on the new one
 
-    // ---- Launcher (TODO: tune) ----
-    public static final double LAUNCHER_RPM_TOLERANCE = 50;
+    // ---- Launcher (live-tunable values are in LauncherConfig) ----
+    public static final double LAUNCHER_MAX_RPM = 6000;      // free speed of the flywheel motor
+    public static final double LAUNCHER_TICKS_PER_REV = 28;  // 6000 RPM goBILDA motor, no gearbox (check the spec sheet)
+
+    // ---- Drivetrain: 435 RPM 12V motors ----
+    public static final double DRIVE_MAX_RPM = 435;
+    public static final double DRIVE_TICKS_PER_REV = 383.6;  // 435 RPM goBILDA motor (check the spec sheet)
 
     // ---- Aiming (TODO: tune) ----
     public static final double AIM_KP = 0;

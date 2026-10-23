@@ -6,6 +6,14 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.RobotConstants;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
+/*
+ * INTAKE - picks up game pieces.
+ *
+ * Put here:
+ *  - motor setup in init()
+ *  - run(), reverse() (unjam), off()
+ *  - optional: a sensor to know when a piece is held
+ */
 public class Intake implements Subsystem {
 
     private final HardwareMap hardwareMap;

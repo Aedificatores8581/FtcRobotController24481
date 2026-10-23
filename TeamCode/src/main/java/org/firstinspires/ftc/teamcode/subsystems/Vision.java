@@ -6,6 +6,15 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.RobotConstants;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 
+/*
+ * VISION - the Limelight camera.
+ *
+ * Put here:
+ *  - Limelight setup in init() (start it, pick the pipeline)
+ *  - update() that reads the latest result once per loop
+ *  - hasTarget(), getTx(), getTy(), setPipeline(int)
+ * Do NOT put here: turning the robot. AimController turns tx into a turn power.
+ */
 public class Vision implements Subsystem {
 
     private final HardwareMap hardwareMap;

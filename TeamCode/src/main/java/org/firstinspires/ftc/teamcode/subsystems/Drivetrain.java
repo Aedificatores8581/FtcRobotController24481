@@ -6,6 +6,15 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.RobotConstants;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
+/*
+ * DRIVETRAIN - the four mecanum wheel motors.
+ *
+ * Put here:
+ *  - motor setup in init() (names from RobotConstants, directions, brake mode)
+ *  - drive(forward, strafe, turn) with the mecanum math
+ *  - optional: field-centric drive (needs heading from Odometry)
+ * Do NOT put here: gamepad reading (that belongs in the TeleOp).
+ */
 public class Drivetrain implements Subsystem {
 
     private final HardwareMap hardwareMap;

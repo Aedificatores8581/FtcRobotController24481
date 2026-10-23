@@ -20,7 +20,6 @@ public class MainTeleOp extends OpMode {
     public void loop() {
         // TODO: read gamepads and call robot.* methods
         robot.update();
-        telemetry.update();
     }
 
     @Override
