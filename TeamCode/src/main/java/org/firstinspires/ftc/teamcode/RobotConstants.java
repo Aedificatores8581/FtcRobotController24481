@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 /*
@@ -30,6 +31,22 @@ public final class RobotConstants {
     // ---- Odometry (TODO: measure) ----
     public static final double PINPOINT_X_OFFSET_MM = 105; // from last year's robot - TODO re-measure on the new one
     public static final double PINPOINT_Y_OFFSET_MM = 38;  // from last year's robot - TODO re-measure on the new one
+
+    // Which goBILDA pod is on the robot, and which way each pod counts.
+    // Flip a direction to REVERSED if X doesn't go up going forward, or Y doesn't go up going left.
+    public static final GoBildaPinpointDriver.GoBildaOdometryPods POD_TYPE =
+            GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD;
+    public static final GoBildaPinpointDriver.EncoderDirection X_POD_DIRECTION =
+            GoBildaPinpointDriver.EncoderDirection.FORWARD;
+    public static final GoBildaPinpointDriver.EncoderDirection Y_POD_DIRECTION =
+            GoBildaPinpointDriver.EncoderDirection.FORWARD;
+
+    // ---- Autonomous ----
+    public static final double AUTO_POWER = 0.3;             // drive and turn power, start low
+    public static final double AUTO_PERIOD_SECONDS = 30;     // length of autonomous
+    public static final double AUTO_OVERDRIVE_SECONDS = 20;  // after this, stop the routine and run onOverdrive()
+    public static final double AUTO_START_DELAY_SECONDS = 0; // alliance delay: raise it so we don't run into our partner
+    public static final int AUTO_PAUSE_MS = 500;             // short pause after each step
 
     // ---- Launcher (live-tunable values are in LauncherConfig) ----
     public static final double LAUNCHER_MAX_RPM = 6000;      // free speed of the flywheel motor
