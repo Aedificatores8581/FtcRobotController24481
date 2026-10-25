@@ -30,14 +30,18 @@ public class Robot {
 
     public Robot(HardwareMap hardwareMap, Telemetry opModeTelemetry) {
         // One telemetry that shows on the Driver Station AND FTC Dashboard.
+        RobotLog.i("Robot: Initializing telemetry");
         telemetry = new MultipleTelemetry(opModeTelemetry, FtcDashboard.getInstance().getTelemetry());
+        RobotLog.i("Robot: Telemetry initialized");
 
+        RobotLog.i("Robot: Initializing subsystems");
         drive    = new Drivetrain(hardwareMap, telemetry);
         odo      = new Odometry(hardwareMap, telemetry);
         launcher = new Launcher(hardwareMap, telemetry);
         intake   = new Intake(hardwareMap, telemetry);
         vision   = new Vision(hardwareMap, telemetry);
-
+        RobotLog.i("Robot: Subsystems initialized");
+        RobotLog.i("Robot: Creating subsystems array and initOk array");
         subsystems = new Subsystem[] {drive, odo, launcher, intake, vision};
         initOk = new boolean[subsystems.length];
     }

@@ -31,7 +31,6 @@ public class Launcher implements Subsystem {
     private Servo feeder;
 
     private double targetRpm = 0;
-    private double lastKp, lastKi, lastKd, lastKf; // to re-apply PIDF only when it changes
 
     public Launcher(HardwareMap hardwareMap, Telemetry telemetry) {
         this.hardwareMap = hardwareMap;
@@ -51,7 +50,7 @@ public class Launcher implements Subsystem {
 
     @Override
     public void update() {
-        applyPidf(); // picks up Dashboard changes
+        applyPidf(); // every loop, so Dashboard changes take effect
         telemetry.addData("Launcher RPM", getRpm());
         telemetry.addData("Launcher target", targetRpm);
     }
@@ -91,11 +90,7 @@ public class Launcher implements Subsystem {
     }
 
     private void applyPidf() {
-        if (LauncherConfig.KP == lastKp && LauncherConfig.KI == lastKi
-                && LauncherConfig.KD == lastKd && LauncherConfig.KF == lastKf) return;
         flywheel.setVelocityPIDFCoefficients(
                 LauncherConfig.KP, LauncherConfig.KI, LauncherConfig.KD, LauncherConfig.KF);
-        lastKp = LauncherConfig.KP; lastKi = LauncherConfig.KI;
-        lastKd = LauncherConfig.KD; lastKf = LauncherConfig.KF;
     }
 }
