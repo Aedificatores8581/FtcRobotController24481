@@ -2,26 +2,17 @@ package org.firstinspires.ftc.teamcode.opmodes.auto;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import org.firstinspires.ftc.teamcode.Robot;
-
+/* Blank template. Copy this file to start a new auto. */
 @Disabled // TODO: remove when ready
 @Autonomous(name = "Auto Main", group = "Main")
-public class AutoMain extends LinearOpMode {
-
-    private Robot robot;
+// Main autonomous routine for the robot.
+// Milestone 1 is in separate autonomous routines in separate JAVA files.
+public class AutoMain extends AutoBase {
 
     @Override
-    public void runOpMode() {
-        robot = new Robot(hardwareMap, telemetry);
-        robot.init();
-
-        waitForStart();
-
-        // TODO: the autonomous routine goes here
-        // Call robot.update() each loop so the subsystems keep running.
-
-        robot.stop();
+    protected void runRoutine() {
+        // TODO: steps go here
+        // Ideas: turn on the Limelight, shoot, then park.
     }
 }

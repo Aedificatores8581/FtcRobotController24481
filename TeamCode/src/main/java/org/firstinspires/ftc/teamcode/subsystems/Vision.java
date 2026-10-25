@@ -43,4 +43,12 @@ public class Vision implements Subsystem {
     }
 
     // TODO: hasTarget(), getTx(), getTy(), setPipeline(int)
+
+    /**
+     * Is the hive tipped? Used by the autos to pick a plan.
+     * TODO: check the AprilTag the camera sees (which tag id means tipped?).
+     */
+    public boolean isHiveTipped() {
+        return false;
+    }
 }
