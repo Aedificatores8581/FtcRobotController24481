@@ -24,11 +24,6 @@ public class GoBildaPinpointDriver_v3_blue_down_far_load extends LinearOpMode {
     private DcMotor frontRightDrive = null;
     private DcMotor backRightDrive = null;
 
-    // --- Overdrive & Timer Configuration ---
-    public boolean overdrive = true;         // Toggle overdrive mode on/off
-    public boolean overtime_revert = false;  // Flag set when overdrive triggers after 20 seconds
-    private final ElapsedTime matchTimer = new ElapsedTime();
-
     // --- Main OpMode Lifecycle ---
     @Override
     public void runOpMode() {
@@ -51,12 +46,10 @@ public class GoBildaPinpointDriver_v3_blue_down_far_load extends LinearOpMode {
         configureAndRecalibratePinpoint();
 
         telemetry.addData("Status", "Initialized - Blue Down Far Load Routine Ready");
-        telemetry.addData("Overdrive Enabled", overdrive);
         telemetry.addData("Device Status", pinpoint.getDeviceStatus());
         telemetry.update();
 
         waitForStart();
-        matchTimer.reset(); // Resets timer to 0 when match starts
 
         // --- Autonomous Execution ---
         if (opModeIsActive()) {
@@ -71,49 +64,17 @@ public class GoBildaPinpointDriver_v3_blue_down_far_load extends LinearOpMode {
         }
     }
 
-    // --- Overdrive & Timer Logic ---
-
+    // --- Imaginary Camera Helper ---
     /**
-     * Checks if overdrive is enabled and 20 seconds have passed since start.
-     * If true, triggers executeOverdriveRoutine() and sets overtime_revert = true.
-     * @return true if overdrive was triggered.
+     * Imaginary camera check for QR tag state.
+     * Returns true if QR tag is detected as still down.
      */
-    public boolean checkOverdriveTrigger() {
-        if (overdrive && matchTimer.seconds() >= 20.0) {
-            overtime_revert = true;
-            executeOverdriveRoutine();
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * OVERDRIVE ROUTINE GROUP
-     * Put whatever code, motion routines, or actions you want to run here
-     * when overdrive triggers after 20 seconds!
-     */
-    public void executeOverdriveRoutine() {
-        displayTelemetry("OVERDRIVE TRIGGERED (20s Elapsed) - Executing Routine");
-        stopMotors();
-    }
-
-    /**
-     * Checks if 20 seconds have elapsed since match start.
-     */
-    public boolean is20SecondsElapsed() {
-        return matchTimer.seconds() >= 20.0;
-    }
-
-    /**
-     * Returns match elapsed time in seconds.
-     */
-    public double getMatchTimeSeconds() {
-        return matchTimer.seconds();
+    public boolean checkImaginaryCameraQrTagDown() {
+        return true; // Set to true by default to simulate QR tag being down
     }
 
     // --- Pinpoint Configuration ---
     public void configureAndRecalibratePinpoint() {
-        // Pod offsets converted from MM (-84mm, -168mm) to INCHES (-3.307 in, -6.614 in)
         pinpoint.setOffsets(-3.307, -6.614, DistanceUnit.INCH);
         pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
         pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD,
@@ -145,8 +106,6 @@ public class GoBildaPinpointDriver_v3_blue_down_far_load extends LinearOpMode {
     private void displayTelemetry(String currentAction) {
         Pose2D pose = pinpoint.getPosition();
         telemetry.addData("Action", currentAction);
-        telemetry.addData("Match Time (S)", String.format(Locale.US, "%.1f / 20.0s", matchTimer.seconds()));
-        telemetry.addData("Overdrive Mode", overdrive ? "ENABLED" : "DISABLED");
         telemetry.addData("Status", pinpoint.getDeviceStatus());
         telemetry.addData("Forward X (IN)", String.format(Locale.US, "%.2f", pose.getX(DistanceUnit.INCH)));
         telemetry.addData("Strafe Y (IN)", String.format(Locale.US, "%.2f", pose.getY(DistanceUnit.INCH)));
@@ -155,27 +114,83 @@ public class GoBildaPinpointDriver_v3_blue_down_far_load extends LinearOpMode {
     }
 
     // --- Autonomous Motion Routine: Blue Down Far Load ---
-    // Sequence: Forward 12 IN -> Turn Left 90° -> Forward 12 IN -> Turn Right 90° -> Forward 12 IN
     private void executeBlueDownFarLoadRoutine() {
 
-        // Step 1: Drive Forward 12 Inches
+        // Step 1: Drive Forward 20 Inches
         pinpoint.update();
         Pose2D startPose1 = pinpoint.getPosition();
-        while (opModeIsActive() && getDistanceInches(startPose1, pinpoint.getPosition()) < 12.0) {
-            if (checkOverdriveTrigger()) return;
+        while (opModeIsActive() && getDistanceInches(startPose1, pinpoint.getPosition()) < 20.0) {
             setDrivePowers(-0.3, -0.3, -0.3, -0.3);
-            displayTelemetry("1. Forward 12 IN");
+            displayTelemetry("1. Forward 20 IN");
             pinpoint.update();
         }
         stopMotors();
-        sleep(500);
+        sleep(300);
 
-        // Step 2: Turn Left 90 Degrees
+        // Step 2: Imaginary Camera QR Tag Scan Loop (Wait up to 20 seconds)
+        ElapsedTime waitTimer = new ElapsedTime();
+        waitTimer.reset();
+
+        displayTelemetry("2. Imaginary Camera Scanning QR Tag...");
+
+        while (opModeIsActive() && checkImaginaryCameraQrTagDown() && waitTimer.seconds() < 20.0) {
+            double secondsLeft = 20.0 - waitTimer.seconds();
+            displayTelemetry(String.format(Locale.US, "2. Waiting for QR Tag... (%.1fs remaining)", secondsLeft));
+            sleep(100);
+            pinpoint.update();
+        }
+
+        // --- PATH DECISION BRANCH ---
+        if (waitTimer.seconds() >= 20.0 && checkImaginaryCameraQrTagDown()) {
+            // =========================================================================
+            // PATH A: QR Tag stayed down for 20 seconds
+            // Action: Reverses 8 inches, THEN executes the full driving & parking sequence!
+            // =========================================================================
+            displayTelemetry("PATH A TRIGGERED (20s Expired & Tag Down) -> Reversing 8 IN & Running Sequence");
+
+            // Reverses 8 Inches
+            pinpoint.update();
+            Pose2D startPoseReverse = pinpoint.getPosition();
+            while (opModeIsActive() && getDistanceInches(startPoseReverse, pinpoint.getPosition()) < 8.0) {
+                setDrivePowers(0.3, 0.3, 0.3, 0.3); // Reverses 8 IN
+                displayTelemetry("Path A: Reversing 8 IN");
+                pinpoint.update();
+            }
+            stopMotors();
+            sleep(300);
+
+            // Execute the full driving & parking sequence (Steps 2b through 9)!
+            executeFullDrivingSequence();
+
+        } else {
+            // =========================================================================
+            // PATH B: QR Tag was cleared / not down before 20 seconds
+            // Action: Reverses 19 inches, THEN stops!
+            // =========================================================================
+            displayTelemetry("PATH B TRIGGERED (QR Tag Cleared) -> Reversing 19 IN & Stopping");
+
+            pinpoint.update();
+            Pose2D startPosePathB = pinpoint.getPosition();
+            while (opModeIsActive() && getDistanceInches(startPosePathB, pinpoint.getPosition()) < 19.0) {
+                setDrivePowers(0.3, 0.3, 0.3, 0.3); // Backwards 19 IN
+                displayTelemetry("Path B: Reversing 19 IN");
+                pinpoint.update();
+            }
+            stopMotors();
+            displayTelemetry("Path B Complete - Stopped");
+        }
+    }
+
+    /**
+     * Executed under Path A: Performs full driving & parking sequence (Steps 2b through 9).
+     */
+    private void executeFullDrivingSequence() {
+
+        // Step 2b: Turn Left 90 Degrees
         pinpoint.update();
         while (opModeIsActive() && pinpoint.getPosition().getHeading(AngleUnit.DEGREES) < 90.0) {
-            if (checkOverdriveTrigger()) return;
             setDrivePowers(-0.3, -0.3, 0.3, 0.3);
-            displayTelemetry("2. Turn Left 90 DEG");
+            displayTelemetry("2b. Turn Left 90 DEG");
             pinpoint.update();
         }
         stopMotors();
@@ -185,7 +200,6 @@ public class GoBildaPinpointDriver_v3_blue_down_far_load extends LinearOpMode {
         pinpoint.update();
         Pose2D startPose3 = pinpoint.getPosition();
         while (opModeIsActive() && getDistanceInches(startPose3, pinpoint.getPosition()) < 30.0) {
-            if (checkOverdriveTrigger()) return;
             setDrivePowers(-0.3, -0.3, -0.3, -0.3);
             displayTelemetry("3. Forward 30 IN");
             pinpoint.update();
@@ -196,7 +210,6 @@ public class GoBildaPinpointDriver_v3_blue_down_far_load extends LinearOpMode {
         // Step 4: Turn Right 90 Degrees (Back to 0.0° heading)
         pinpoint.update();
         while (opModeIsActive() && pinpoint.getPosition().getHeading(AngleUnit.DEGREES) > 0.0) {
-            if (checkOverdriveTrigger()) return;
             setDrivePowers(0.3, 0.3, -0.3, -0.3);
             displayTelemetry("4. Turn Right 90 DEG (Back to 0°)");
             pinpoint.update();
@@ -204,13 +217,12 @@ public class GoBildaPinpointDriver_v3_blue_down_far_load extends LinearOpMode {
         stopMotors();
         sleep(500);
 
-        // Step 5: Drive Forward 48 Inches
+        // Step 5: Drive Forward 70 Inches
         pinpoint.update();
         Pose2D startPose5 = pinpoint.getPosition();
-        while (opModeIsActive() && getDistanceInches(startPose5, pinpoint.getPosition()) < 72.0) {
-            if (checkOverdriveTrigger()) return;
+        while (opModeIsActive() && getDistanceInches(startPose5, pinpoint.getPosition()) < 74.0) {
             setDrivePowers(-0.3, -0.3, -0.3, -0.3);
-            displayTelemetry("5. Forward 48 IN");
+            displayTelemetry("5. Forward 70 IN");
             pinpoint.update();
         }
         stopMotors();
@@ -219,7 +231,6 @@ public class GoBildaPinpointDriver_v3_blue_down_far_load extends LinearOpMode {
         // Step 6: Turn Left 90 Degrees
         pinpoint.update();
         while (opModeIsActive() && pinpoint.getPosition().getHeading(AngleUnit.DEGREES) < 90.0) {
-            if (checkOverdriveTrigger()) return;
             setDrivePowers(-0.3, -0.3, 0.3, 0.3);
             displayTelemetry("6. Turn Left 90 DEG");
             pinpoint.update();
@@ -231,7 +242,6 @@ public class GoBildaPinpointDriver_v3_blue_down_far_load extends LinearOpMode {
         pinpoint.update();
         Pose2D startPose7 = pinpoint.getPosition();
         while (opModeIsActive() && getDistanceInches(startPose7, pinpoint.getPosition()) < 10.0) {
-            if (checkOverdriveTrigger()) return;
             setDrivePowers(-0.3, -0.3, -0.3, -0.3);
             displayTelemetry("7. Forward 10 IN");
             pinpoint.update();
@@ -243,7 +253,6 @@ public class GoBildaPinpointDriver_v3_blue_down_far_load extends LinearOpMode {
         ElapsedTime wallTimer = new ElapsedTime();
         wallTimer.reset();
         while (opModeIsActive() && wallTimer.seconds() < 3.0) {
-            if (checkOverdriveTrigger()) return;
             setDrivePowers(-0.3, -0.3, -0.3, -0.3);
             displayTelemetry("8. Squaring Up on Wall (3s)");
             pinpoint.update();
@@ -251,16 +260,15 @@ public class GoBildaPinpointDriver_v3_blue_down_far_load extends LinearOpMode {
         stopMotors();
         sleep(300);
 
-        // Step 9: Back Out of Wall for 1 Second at 0.4 Speed
+        // Step 9: Back Out of Wall for 0.3 Seconds at 0.2 Speed
         ElapsedTime backoutTimer = new ElapsedTime();
         backoutTimer.reset();
-        while (opModeIsActive() && backoutTimer.seconds() < 0.5) {
-            if (checkOverdriveTrigger()) return;
-            setDrivePowers(0.3, 0.3, 0.3, 0.3);
-            displayTelemetry("9. Backing Out of Wall (1s @ 0.4 speed)");
+        while (opModeIsActive() && backoutTimer.seconds() < 0.3) {
+            setDrivePowers(0.2, 0.2, 0.2, 0.2);
+            displayTelemetry("9. Backing Out of Wall");
             pinpoint.update();
         }
         stopMotors();
-        displayTelemetry("9. Routine Complete - Stopped");
+        displayTelemetry("9. Full Driving Sequence Complete - Stopped");
     }
 }
