@@ -58,14 +58,13 @@ public class Vision implements Subsystem {
         limelight.pipelineSwitch(pipeline);
     }
 
-    @Override
     public boolean TipDetect(double startCluster, double endCluster) {
         // 42 and 45 returns true for Blue Audience
         // 38 and 41 returns true for Blue Far
         // add red audience and red far blah blah blah
         tipped = false;
 
-        if (result.isValid()) {
+        if (result != null && result.isValid()) {
 
             List<LLResultTypes.FiducialResult> fiducialResults =
                     result.getFiducialResults();

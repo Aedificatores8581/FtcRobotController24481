@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 /*
@@ -44,9 +43,9 @@ public final class RobotConstants {
             GoBildaPinpointDriver.EncoderDirection.FORWARD;
 
     // ---- Autonomous ----
-    public static final double AUTO_POWER = 0.3;             // drive and turn power, start low
-    public static final double AUTO_PERIOD_SECONDS = 30;     // length of autonomous
-    public static final double AUTO_OVERDRIVE_SECONDS = 20;  // after this, stop the routine and run onOverdrive()
+    public static final double AUTO_POWER = 0.5;             // drive and turn power
+    public static final double AUTO_PERIOD_SECONDS = 30;     // length of autonomous (30 seconds total)
+    public static final double AUTO_OVERDRIVE_SECONDS = 23;  // main task cutoff at 23s (leaves 7s leftover for parking)
     public static final double AUTO_START_DELAY_SECONDS = 0; // alliance delay: raise it so we don't run into our partner
     public static final int AUTO_PAUSE_MS = 500;             // short pause after each step
 
