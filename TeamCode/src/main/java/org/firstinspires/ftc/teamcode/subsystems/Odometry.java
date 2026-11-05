@@ -34,6 +34,11 @@ public class Odometry implements Subsystem {
     }
 
     @Override
+    public boolean TipDetect(double startCluster, double endCluster) {
+        return false;
+    }
+
+    @Override
     public void init() {
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, RobotConstants.PINPOINT);
         pinpoint.setOffsets(RobotConstants.PINPOINT_X_OFFSET_MM,

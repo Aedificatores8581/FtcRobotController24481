@@ -38,6 +38,11 @@ public class Drivetrain implements Subsystem {
         this.telemetry = telemetry;
     }
 
+    @Override
+    public boolean TipDetect(double startCluster, double endCluster) {
+        return false;
+    }
+
     // Initializes the drivetrain subsystem by setting up the motors and their configurations.
     @Override
     public void init() {

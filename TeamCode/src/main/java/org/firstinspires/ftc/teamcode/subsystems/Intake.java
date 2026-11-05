@@ -27,6 +27,11 @@ public class Intake implements Subsystem {
     }
 
     @Override
+    public boolean TipDetect(double startCluster, double endCluster) {
+        return false;
+    }
+
+    @Override
     public void init() {
         // TODO: get hardware from hardwareMap using RobotConstants names
     }

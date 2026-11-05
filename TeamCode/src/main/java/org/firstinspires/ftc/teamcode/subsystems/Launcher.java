@@ -38,6 +38,11 @@ public class Launcher implements Subsystem {
     }
 
     @Override
+    public boolean TipDetect(double startCluster, double endCluster) {
+        return false;
+    }
+
+    @Override
     public void init() {
         flywheel = hardwareMap.get(DcMotorEx.class, RobotConstants.LAUNCHER_MOTOR);
         feeder = hardwareMap.get(Servo.class, RobotConstants.FEEDER_SERVO);
