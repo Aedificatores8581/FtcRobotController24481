@@ -4,6 +4,7 @@ import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.LLStatus;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.acmerobotics.dashboard.FtcDashboard;
@@ -17,10 +18,15 @@ import java.util.List;
 public class LimelightTest extends LinearOpMode {
 
     private Limelight3A limelight;
+    private Servo servo;
+
+    private double servopos = 0;
 
     @Override
     public void runOpMode() throws InterruptedException {
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
+
+        servo = hardwareMap.get(Servo.class, "limelightServo");
 
         String tipped = "null";
 
@@ -41,35 +47,9 @@ public class LimelightTest extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            LLStatus status = limelight.getStatus();
-            telemetry.addData("LL", "Temp: %.1fC, CPU: %.1f%%, FPS: %d",
-                    status.getTemp(), status.getCpu(), (int) status.getFps());
+            servopos = servopos + (gamepad1.left_stick_y / 10);
 
-            LLResult result = limelight.getLatestResult();
-            if (result.isValid()) {
-                telemetry.addData("tx", result.getTx());
-                telemetry.addData("txnc", result.getTxNC());
-                telemetry.addData("ty", result.getTy());
-                telemetry.addData("tync", result.getTyNC());
-                // Access fiducial results
-                List<LLResultTypes.FiducialResult> fiducialResults = result.getFiducialResults();
-                for (LLResultTypes.FiducialResult fr : fiducialResults) {
-                    telemetry.addData("Fiducial", "ID: %d, Family: %s, X: %.2f, Y: %.2f", fr.getFiducialId(), fr.getFamily(), fr.getTargetXDegrees(), fr.getTargetYDegrees());
-
-
-
-                    if ((fr.getFiducialId()>=42) && (fr.getFiducialId()<=45)) {
-                        tipped = "true";
-                    } else if (((fr.getFiducialId()>=38) && (fr.getFiducialId()<=41)) && tipped.equals("null")) {
-                                                tipped = "false";
-                    }
-                }
-            } else {
-                tipped = "null";
-            }
-
-            telemetry.addData("Tipped?", tipped);
-            telemetry.update();
+            servo.setPosition(servopos);
         }
         limelight.stop();
     }

@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 /*
  * One place for every hardware name and tunable number.
  * Change values here, not inside subsystems or OpModes.
+ * TODO eat cheese >:)
  */
 public final class RobotConstants {
 
@@ -91,4 +92,5 @@ public final class RobotConstants {
 
     public static final boolean gorp = true;
     //DO NOT DELETE.
+
 }
