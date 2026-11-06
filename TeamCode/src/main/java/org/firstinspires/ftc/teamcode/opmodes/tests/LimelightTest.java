@@ -47,9 +47,11 @@ public class LimelightTest extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            servopos = servopos + (gamepad1.left_stick_y / 10);
+            servopos = servopos + (gamepad1.left_stick_y / 1000);
 
             servo.setPosition(servopos);
+
+            telemetry.addData("servo position", servopos);
         }
         limelight.stop();
     }
