@@ -13,14 +13,14 @@ import org.firstinspires.ftc.teamcode.RobotConstants;
 /*
  * LAUNCHER - flywheel plus the feeder that pushes a piece into it.
  *
- * How it works: the flywheel motor holds a target speed (RPM) using the motor
+ * How it works: the flywheel motor holds a target speed (ticks/sec) using the motor
  * controller's built-in PIDF. Tune KP/KI/KD/KF in LauncherConfig (live from FTC Dashboard).
  *
  * Put here:
- *  - spinUp(rpm), stopFlywheel(), reverse(power) - run backward to clear a jam
+ *  - spinUp(vel) in ticks per second, stopFlywheel(), reverse(power) - run backward to clear a jam
  *  - isReady() - true when the flywheel is close enough to the target speed
  *  - feed() / retractFeeder()
- * Later: pick the RPM from the distance to the goal.
+ * Later: pick the speed from the distance to the goal.
  */
 public class Launcher implements Subsystem {
 
@@ -52,8 +52,9 @@ public class Launcher implements Subsystem {
     @Override
     public void update() {
         applyPidf(); // every loop, so Dashboard changes take effect
-        telemetry.addData("Launcher RPM", getRpm());
-        telemetry.addData("Launcher target", targetVel);
+        telemetry.addData("Launcher velocity (ticks/s)", getVelocity());
+        telemetry.addData("Launcher target (ticks/s)", targetVel);
+        telemetry.addData("Launcher ready", isReady());
     }
 
     @Override
@@ -62,10 +63,11 @@ public class Launcher implements Subsystem {
         retractFeeder();
     }
 
+    /** Spin the flywheel to a speed in encoder ticks per second. */
     public void spinUp(double vel) {
-        if (vel != targetVel) RobotLog.ii("Launcher", "target rpm -> %.0f", vel);
+        if (vel != targetVel) RobotLog.ii("Launcher", "target ticks/s -> %.0f", vel);
         targetVel = vel;
-        flywheel.setVelocity(RobotConstants.LAUNCHER_TARGET_VEL);
+        flywheel.setVelocity(vel);
     }
 
     public void stopFlywheel() {
@@ -83,9 +85,14 @@ public class Launcher implements Subsystem {
         return flywheel.getVelocity() * 60.0 / RobotConstants.LAUNCHER_TICKS_PER_REV;
     }
 
+    /** Flywheel speed in ticks per second. */
+    public double getVelocity() {
+        return flywheel.getVelocity();
+    }
+
     public boolean isReady() {
         return targetVel > 0
-                && Math.abs(getRpm() - targetVel) < LauncherConfig.RPM_TOLERANCE;
+                && Math.abs(getVelocity() - targetVel) < LauncherConfig.VEL_TOLERANCE;
     }
 
     public void feed() {

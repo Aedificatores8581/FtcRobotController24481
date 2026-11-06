@@ -25,7 +25,6 @@ public class Vision implements Subsystem {
 
     private Boolean tipped = false;
     private Servo servo;
-    private double servopos = 0;
     public Vision(HardwareMap hardwareMap, Telemetry telemetry) {
         this.hardwareMap = hardwareMap;
         this.telemetry = telemetry;
@@ -37,7 +36,7 @@ public class Vision implements Subsystem {
                 Limelight3A.class,
                 RobotConstants.LIMELIGHT
         );
-        Servo limelight_servo = hardwareMap.get(Servo.class, RobotConstants.LIME_LITE_SERVO);
+        servo = hardwareMap.get(Servo.class, RobotConstants.LIME_LITE_SERVO);
         limelight.pipelineSwitch(0);
         limelight.start();
         FtcDashboard.getInstance().startCameraStream(limelight, 10);
@@ -65,6 +64,11 @@ public class Vision implements Subsystem {
 
     public double getTy() {
         return hasTarget() ? result.getTy() : 0;
+    }
+
+    // tilts the Limelight, 0 to 1 is the full servo range
+    public void setTilt(double position) {
+        servo.setPosition(position);
     }
 
     public void setPipeline(int pipeline) {

@@ -11,7 +11,7 @@ public final class RobotConstants {
 
     private RobotConstants() {} // constants only; never instantiated
 
-    // ---- Hardware map names (must match the Driver Hub configuration) ----
+    // hardware map names (must match the Driver Hub configuration)
     public static final String FRONT_LEFT_MOTOR  = "FL";
     public static final String BACK_LEFT_MOTOR   = "BL";
     public static final String FRONT_RIGHT_MOTOR = "FR";
@@ -23,13 +23,13 @@ public final class RobotConstants {
     public static final String INTAKE_MOTOR      = "intake";
     public static final String LIME_LITE_SERVO = "limelightservo";
 
-    // ---- Drive motor directions (flip one if that wheel spins the wrong way) ----
+    // drive motor directions (flip one if that wheel spins the wrong way)
     public static final DcMotor.Direction FRONT_LEFT_DIRECTION  = DcMotor.Direction.REVERSE;
     public static final DcMotor.Direction BACK_LEFT_DIRECTION   = DcMotor.Direction.REVERSE;
     public static final DcMotor.Direction FRONT_RIGHT_DIRECTION = DcMotor.Direction.FORWARD;
     public static final DcMotor.Direction BACK_RIGHT_DIRECTION  = DcMotor.Direction.FORWARD;
 
-    // ---- Odometry ----
+    // odometry
     public static final double PINPOINT_X_OFFSET_MM = -8.0; // 8 mm Right of center
     public static final double PINPOINT_Y_OFFSET_MM = 1.0;  // 1 mm Up (Forward) of center
 
@@ -42,31 +42,29 @@ public final class RobotConstants {
     public static final GoBildaPinpointDriver.EncoderDirection Y_POD_DIRECTION =
             GoBildaPinpointDriver.EncoderDirection.FORWARD;
 
-    // ---- Autonomous ----
+    // autonomous
     public static final double AUTO_POWER = 0.5;             // drive and turn power, start low
     public static final double AUTO_PERIOD_SECONDS = 30;     // length of autonomous
-    public static final double AUTO_OVERDRIVE_SECONDS = 40;  // after this, stop the routine and run onOverdrive()
-    public static final double AUTO_START_DELAY_SECONDS = 0; // alliance delay: raise it so we don't run into our partner
+    public static final double AUTO_START_DELAY_SECONDS = 0; // wait before starting, so we don't hit our partner
     public static final int AUTO_PAUSE_MS = 250;             // short pause after each step
 
-    // ---- Launcher (live-tunable values are in LauncherConfig) ----
-    public static final DcMotor.Direction LAUNCHER_MOTOR_DIRECTION = DcMotor.Direction.REVERSE; // confirmed on the robot
-    public static final double LAUNCHER_TARGET_VEL = 950;      // free speed of the flywheel motor
-    public static final double LAUNCHER_TICKS_PER_REV = 28;  // 6000 RPM goBILDA motor, no gearbox (check the spec sheet)
-    public static final double LAUNCHER_REVERSE_POWER = 0.5; // raw power while clearing a jam, start low and tune
+    // launcher (live-tunable values are in LauncherConfig)
+    public static final DcMotor.Direction LAUNCHER_MOTOR_DIRECTION = DcMotor.Direction.REVERSE;
+    public static final double LAUNCHER_TICKS_PER_REV = 28;  // 6000 RPM goBILDA motor
+    public static final double LAUNCHER_REVERSE_POWER = 0.5; // power for clearing a jam
 
-    // ---- Intake ----
-    public static final double INTAKE_POWER = 0.8; // confirmed on the robot
+    // intake
+    public static final double INTAKE_POWER = 0.8; 
 
-    // ---- Drivetrain: 435 RPM 12V motors ----
+    // drivetrain: 435 RPM 12V motors
     public static final double DRIVE_MAX_RPM = 435;
-    public static final double DRIVE_TICKS_PER_REV = 383.6;  // 435 RPM goBILDA motor (check the spec sheet)
+    public static final double DRIVE_TICKS_PER_REV = 383.6;  // 435 RPM goBILDA motor
 
-    // ---- Aiming (TODO: tune) ----
+    // aiming (TODO: tune)
     public static final double AIM_KP = 0;
     public static final double AIM_DEADBAND_DEG = 1.0;
 
-    // ---- AprilTag fiducial ID ranges (Limelight pipeline), used by Vision.isHiveTipped ----
+    // AprilTag fiducial ID ranges (Limelight pipeline), used by Vision.isHiveTipped
     // From the game manual (Fig 9-17). "Scoring" = far side from audience.
     public static final int TAG_RED_SCORING_MIN = 30;
     public static final int TAG_RED_SCORING_MAX = 33;
@@ -77,16 +75,5 @@ public final class RobotConstants {
     public static final int TAG_BLUE_SCORING_MIN = 42;
     public static final int TAG_BLUE_SCORING_MAX = 45;
 
-    // ---- Shooting (auto) - starting guesses, tune these on the robot ----
-    public static final double SHOOT_READY_TIMEOUT_SECONDS = 2.0; // give up waiting for speed and fire anyway
-    public static final double SHOOT_FEED_HOLD_SECONDS = 0.3;     // how long to hold the feeder forward
-    public static final double SHOOT_FEED_PAUSE_SECONDS = 0.3;    // gap before checking ready for the next piece
-
-    //april tag numbers (auto)
-    public static final int[] LEFT_BLUE_APRIL_TAG_CODES = {38,41};
-    public static final int[] RIGHT_BLUE_APRIL_TAG_CODES = {42,45};
-
-    //blue above red below this line
-    public static final int[] LEFT_RED_APRIL_TAG_CODES = {34,37};
-    public static final int[] RIGHT_RED_APRIL_TAG_CODES = {30,33};
+    public static final double AUTO_TAG_SCAN_SECONDS = 8.0; // how long to look for the hive tag
 }

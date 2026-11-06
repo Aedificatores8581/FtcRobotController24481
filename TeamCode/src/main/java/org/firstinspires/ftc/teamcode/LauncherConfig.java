@@ -17,12 +17,17 @@ public class LauncherConfig {
     public static double KD = 12.0;
     public static double KF = 150.0;
 
-    public static double RPM_TOLERANCE = 20; // "ready" when within this many RPM
-    public static double DEFAULT_RPM = 1000; // tested working speed
+    // Flywheel speed is in encoder ticks per second everywhere (no RPM conversion).
+    public static double TARGET_VEL = 950;          // ticks/sec, the speed we shoot at
+    public static double VEL_TOLERANCE = 25;        // "ready" when within this many ticks/sec
+    public static double READY_HOLD_SECONDS = 0.1;  // must hold speed this long before a shot
+
+    // Auto shooting, starting guesses. Tune live from Dashboard.
+    public static int AUTO_SHOT_COUNT = 3;                  // pieces to shoot at the hive in auto
+    public static double SHOOT_READY_TIMEOUT_SECONDS = 2.0; // fire anyway after this long
+    public static double SHOOT_FEED_HOLD_SECONDS = 0.3;     // how long to hold the feeder forward
+    public static double SHOOT_FEED_PAUSE_SECONDS = 0.3;    // wait before the next shot
 
     public static double FEEDER_REST_POS = 0.3; // held while not feeding
-    public static double FEEDER_FEED_POS = 0.04; // held while the feed trigger is pressed
-
-    public static double FEED_PAUSE_TIME  = 0.3; //Time the feeder stays closed
-    public static double FEED_OPEN_TIME = 0.3; //Time the feeder stays open
+    public static double FEEDER_FEED_POS = 0.04; // held while feeding
 }
