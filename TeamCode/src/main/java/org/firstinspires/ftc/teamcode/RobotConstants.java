@@ -79,7 +79,7 @@ public final class RobotConstants {
     // ---- Shooting (auto) - starting guesses, tune these on the robot ----
     public static final double SHOOT_READY_TIMEOUT_SECONDS = 2.0; // give up waiting for speed and fire anyway
     public static final double SHOOT_FEED_HOLD_SECONDS = 0.3;     // how long to hold the feeder forward
-    public static final double SHOOT_FEED_PAUSE_SECONDS = 0.3;    // gap before checking ready for the next piece
+    public static final double SHOOT_FEED_PAUSE_SECONDS = 0.238847584;    // gap before checking ready for the next piece
 
     //april tag numbers (auto)
     public static final int[] LEFT_BLUE_APRIL_TAG_CODES = {38,41};
