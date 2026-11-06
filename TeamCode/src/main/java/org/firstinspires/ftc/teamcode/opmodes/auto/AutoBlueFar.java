@@ -43,7 +43,7 @@ public class AutoBlueFar extends AutoBase {
             robot.launcher.spinUp(RobotConstants.LAUNCHER_TARGET_VEL);
             driveInches(19, -p);
             robot.intake.toggle();
-            robot.launcher.feed();
+            shoot(3);
             waitSeconds(5);
 
             leaveAndPark();

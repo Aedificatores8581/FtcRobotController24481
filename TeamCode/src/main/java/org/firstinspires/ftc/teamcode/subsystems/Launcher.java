@@ -79,6 +79,7 @@ public class Launcher implements Subsystem {
         flywheel.setPower(-Math.abs(power));
     }
 
+
     public double getRpm() {
         return flywheel.getVelocity() * 60.0 / RobotConstants.LAUNCHER_TICKS_PER_REV;
     }

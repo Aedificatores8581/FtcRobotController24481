@@ -22,4 +22,7 @@ public class LauncherConfig {
 
     public static double FEEDER_REST_POS = 0.3; // held while not feeding
     public static double FEEDER_FEED_POS = 0.04; // held while the feed trigger is pressed
+
+    public static double FEED_PAUSE_TIME  = 0.3; //Time the feeder stays closed
+    public static double FEED_OPEN_TIME = 0.3; //Time the feeder stays open
 }
