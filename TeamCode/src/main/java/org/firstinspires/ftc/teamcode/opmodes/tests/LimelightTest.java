@@ -20,13 +20,13 @@ public class LimelightTest extends LinearOpMode {
     private Limelight3A limelight;
     private Servo servo;
 
-    private double servopos = 0;
+    private double servopos = 1;
 
     @Override
     public void runOpMode() throws InterruptedException {
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
 
-        servo = hardwareMap.get(Servo.class, "limelightServo");
+        servo = hardwareMap.get(Servo.class, "limelightservo");
 
         String tipped = "null";
 
@@ -43,15 +43,23 @@ public class LimelightTest extends LinearOpMode {
         dashboard.startCameraStream(limelight, 10);
         telemetry.addData(">", "Robot Ready.  Press Play.");
         telemetry.update();
-
+        servopos = 0.5;
         waitForStart();
 
         while (opModeIsActive()) {
-            servopos = servopos + (gamepad1.left_stick_y / 1000);
+            if (gamepad1.dpad_up) {
+                servopos += 0.001;
+            }
+            if (gamepad1.dpad_down) {
+                servopos -= 0.001;
+            }
+
+            servopos = Math.min(Math.max(servopos, 0.1), 0.9);
 
             servo.setPosition(servopos);
 
             telemetry.addData("servo position", servopos);
+            telemetry.update();
         }
         limelight.stop();
     }
