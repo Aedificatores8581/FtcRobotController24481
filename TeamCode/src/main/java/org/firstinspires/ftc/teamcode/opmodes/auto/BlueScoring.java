@@ -11,16 +11,19 @@ public class BlueScoring extends AutoBase {
     protected void runRoutine() {
         double p = RobotConstants.AUTO_POWER;
 
-        // drive up, start the flywheel, then check the hive
-        driveInches(20, p);
+        //start the flywheel, then check the hive
         robot.launcher.spinUp();
 
         // tipped: back up to the shooting spot and shoot. Not tipped: back up a little
         if (scanForTip(RobotConstants.TAG_BLUE_SCORING_MIN, RobotConstants.TAG_BLUE_SCORING_MAX)) {
-            driveInches(19, -p);
+
+            //erase *down arrow*
+            //driveInches(19, -p);
+
             shoot(3);
         } else {
-            driveInches(8, -p);
+            waitSeconds(15);
+            //driveInches(8, -p);
         }
 
         leaveAndPark();
@@ -30,9 +33,37 @@ public class BlueScoring extends AutoBase {
     private void leaveAndPark() {
         double p = RobotConstants.AUTO_POWER;
 
+
+        //drive to0 what is needed code
         driveInches(12, p);
         turnToDegrees(90, p);
-        driveInches(30, p);
+        driveInches(48, p);
+        driveSeconds(1.5, p);
+        turnToDegrees(90, p);
+        driveSeconds(1.0, p);
+        turnToDegrees(90, p);
+        driveInches(12, p);
+
+        //reverse code
+
+        driveInches(12, -p);
+        turnToDegrees(90, -p);
+        driveSeconds(1.0, -p);
+        turnToDegrees(90, p);
+        driveSeconds(1.5, -p);
+        driveInches(48, -p);
+        turnToDegrees(90, -p);
+        driveInches(12, -p);
+
+        //leave and aprk working code
+        driveInches(12, p);
+        turnToDegrees(90, p);
+        driveInches(48, p);
+        driveSeconds(1.5, p);
+        turnToDegrees(90, p);
+        driveSeconds(1.0, p);
+        turnToDegrees(90, p);
+        driveInches(12, p);
         turnToDegrees(0, p);
         driveInches(79, p);
         turnToDegrees(80, p);
