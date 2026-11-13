@@ -7,7 +7,6 @@ import com.qualcomm.robotcore.util.RobotLog;
 import org.firstinspires.ftc.teamcode.LauncherConfig;
 import org.firstinspires.ftc.teamcode.Robot;
 import org.firstinspires.ftc.teamcode.RobotConstants;
-import org.firstinspires.ftc.teamcode.util.MathUtil;
 
 /*
  * Shared setup and step helpers for autonomous routines.
@@ -42,13 +41,13 @@ public abstract class AutoBase extends LinearOpMode {
     // pose saved by markPose(), in odometry inches and degrees
     private double markX, markY, markHeading;
 
-    // return-to-pose tuning: raise a gain if it is too slow, lower it if it overshoots
-    private static final double POSE_DRIVE_GAIN = 0.05;    // power per inch of error
-    private static final double POSE_TURN_GAIN = 0.02;     // power per degree of error
-    private static final double POSE_MIN_POWER = 0.15;     // so it does not stall near the target
-    private static final double POSE_TOLERANCE_INCHES = 1.0;
-    private static final double POSE_TOLERANCE_DEGREES = 2.0;
-    private static final double POSE_TIMEOUT_SECONDS = 4.0; // give up so we still have time to park
+    // correction settings: ignore errors smaller than this, and move gently
+    private static final double CORRECT_TOLERANCE_INCHES = 1.0;
+    private static final double CORRECT_POWER = 0.25;
+    private static final double CORRECT_MAX_SECONDS = 3.0; // the whole correction gives up after this
+
+    // when set, every step loop stops at this match time (used to keep the correction from stalling)
+    private double stepDeadline = Double.MAX_VALUE;
 
     /** Each auto puts its steps here. */
     protected abstract void runRoutine();
@@ -143,13 +142,13 @@ public abstract class AutoBase extends LinearOpMode {
 
         strafeSeconds(0.5, wallPower);   // square up on the wall
         robot.intake.on();
-        driveInches(48, p);              // gather
-        robot.intake.off();
-        strafeSeconds(0.5, wallPower);   // square up again
-        driveInches(48, -p);             // back to the start spot
+        driveInches(48, p); 
+        driveInches(2, -p);    
+        driveInches(2, p);   // gather
+        driveInches(39.5, -p);             // back to the start spot
     }
 
-    // Remember where we are (x, y, heading) so returnToMarkedPose() can come back to it.
+    // Remember where we are so checkAndCorrect() can compare against it later.
     protected void markPose() {
         robot.update();
         markX = robot.odo.getXInches();
@@ -158,44 +157,53 @@ public abstract class AutoBase extends LinearOpMode {
         log(String.format("markPose x %.1f y %.1f h %.1f", markX, markY, markHeading));
     }
 
-    // Drive back to the pose saved by markPose(), including the heading.
-    // Uses odometry, so it fixes any drift from the strafes and the gather.
-    protected void returnToMarkedPose(double maxPower) {
-        log("returnToMarkedPose");
-        ElapsedTime timer = new ElapsedTime();
+    // One small check and correction: turn to the marked heading, then fix any forward or
+    // sideways error left over. Does not loop, so it cannot get stuck.
+    protected void checkAndCorrect() {
+        // skip it if we are short on time, so leave and park still gets to run
+        if (timeToPark()) {
+            log("check skipped, time to park");
+            return;
+        }
+        stepDeadline = matchTimer.seconds() + CORRECT_MAX_SECONDS;
+        turnToDegrees(markHeading, CORRECT_POWER);
         robot.update();
 
-        while (!shouldStop() && timer.seconds() < POSE_TIMEOUT_SECONDS) {
-            double dx = markX - robot.odo.getXInches();
-            double dy = markY - robot.odo.getYInches();
-            double dHeading = MathUtil.angleWrap(markHeading - robot.odo.getHeadingDegrees());
-            double distance = Math.hypot(dx, dy);
+        double dx = markX - robot.odo.getXInches();
+        double dy = markY - robot.odo.getYInches();
+        double h = Math.toRadians(robot.odo.getHeadingDegrees());
+        double forward = dx * Math.cos(h) + dy * Math.sin(h);   // + means we need to go forward
+        double left = -dx * Math.sin(h) + dy * Math.cos(h);     // + means we need to go left
+        log(String.format("check: need forward %.1f in, left %.1f in", forward, left));
 
-            if (distance < POSE_TOLERANCE_INCHES && Math.abs(dHeading) < POSE_TOLERANCE_DEGREES) break;
+        if (Math.abs(forward) > CORRECT_TOLERANCE_INCHES) {
+            driveInches(Math.abs(forward), Math.signum(forward) * CORRECT_POWER);
+        }
+        if (Math.abs(left) > CORRECT_TOLERANCE_INCHES) {
+            strafeInches(Math.abs(left), left > 0 ? -CORRECT_POWER : CORRECT_POWER); // + power is right
+        }
 
-            // turn the field-frame error into the robot's frame (forward and left)
-            double h = Math.toRadians(robot.odo.getHeadingDegrees());
-            double forward = dx * Math.cos(h) + dy * Math.sin(h);
-            double left = -dx * Math.sin(h) + dy * Math.cos(h);
+        boolean timedOut = matchTimer.seconds() >= stepDeadline;
+        stepDeadline = Double.MAX_VALUE;
+        robot.update();
+        if (timedOut) log("correction timed out, moving on");
+        log(String.format("corrected: now x %.1f y %.1f h %.1f (target x %.1f y %.1f h %.1f)",
+                robot.odo.getXInches(), robot.odo.getYInches(), robot.odo.getHeadingDegrees(),
+                markX, markY, markHeading));
+    }
 
-            double fwdPower = posePower(forward * POSE_DRIVE_GAIN, maxPower);
-            double leftPower = posePower(left * POSE_DRIVE_GAIN, maxPower);
-            double turnLeftPower = posePower(dHeading * POSE_TURN_GAIN, maxPower);
+    // Strafe a set distance using odometry. Positive power is right.
+    protected void strafeInches(double inches, double power) {
+        log("strafeInches " + inches + " at " + power);
+        robot.update();
+        double startX = robot.odo.getXInches();
+        double startY = robot.odo.getYInches();
 
-            // drive(): + strafe is right, + turn is clockwise
-            robot.drive.drive(fwdPower, -leftPower, -turnLeftPower);
-            telemetry.addData("Pose error", "%.1f in, %.1f deg", distance, dHeading);
+        while (!shouldStop() && distanceFrom(startX, startY) < inches) {
+            robot.drive.drive(0, power, 0);
             tick();
         }
         stopAndPause();
-        log(String.format("arrived x %.1f y %.1f h %.1f", robot.odo.getXInches(),
-                robot.odo.getYInches(), robot.odo.getHeadingDegrees()));
-    }
-
-    // Limit to maxPower, but push at least POSE_MIN_POWER unless the error is basically zero
-    private double posePower(double power, double maxPower) {
-        if (Math.abs(power) < 0.001) return 0;
-        return Math.signum(power) * MathUtil.clamp(Math.abs(power), POSE_MIN_POWER, maxPower);
     }
 
     /** Wait while the robot keeps updating (telemetry, odometry). */
@@ -245,6 +253,8 @@ public abstract class AutoBase extends LinearOpMode {
             lastShot = String.format("Shot %d: %s at %.0f, waited %.1fs", i + 1,
                     robot.launcher.isReady() ? "READY" : "TIMEOUT",
                     robot.launcher.getVelocity(), readyTimer.seconds());
+            RobotLog.ii("Auto", "%s (target %.0f, tolerance %.0f)", lastShot,
+                    LauncherConfig.AUTO_TARGET_VELOCITY, LauncherConfig.VELOCITY_TOLERANCE);
 
             robot.launcher.feed();
             waitSeconds(LauncherConfig.FEED_HOLD_TIME);
@@ -274,7 +284,7 @@ public abstract class AutoBase extends LinearOpMode {
     }
 
     private boolean shouldStop() {
-        return !opModeIsActive() || timeIsUp();
+        return !opModeIsActive() || timeIsUp() || matchTimer.seconds() >= stepDeadline;
     }
 
     private boolean timeIsUp() {

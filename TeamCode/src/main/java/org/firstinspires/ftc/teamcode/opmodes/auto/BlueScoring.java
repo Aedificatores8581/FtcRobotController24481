@@ -39,15 +39,23 @@ public class BlueScoring extends AutoBase {
         log("Hive still up after 2s: " + stillUp);
 
         if (stillUp) {
-            // remember the shooting spot, gather, then use odometry to come back to it
+            // save the shooting spot, gather along the wall, then check and correct back to it
             markPose();
             log("Turning to gather heading " + GATHER_HEADING_DEGREES);
             turnToDegrees(GATHER_HEADING_DEGREES, p);
             log("Gathering along wall");
             gatherAlongWall(WALL_POWER);
-            returnToMarkedPose(p);
-            log("Shooting 3 more");
-            shoot(3);
+            turnToDegrees(0, p);
+            checkAndCorrect();
+
+            // look for the tags one more time, only shoot if they are there
+            log("Scanning for hive tags before second shot");
+            if (hiveStillUp()) {
+                log("Tags seen, shooting 3 more");
+                shoot(3);
+            } else {
+                log("No tags seen, skipping second shot");
+            }
         }
 
         log("Leave and park");
@@ -66,13 +74,13 @@ public class BlueScoring extends AutoBase {
         double p = RobotConstants.AUTO_POWER;
 
         driveInches(12, p);
-        turnToDegrees(90, p);
+        turnToDegrees(85, p);
         driveInches(30, p);
         turnToDegrees(0, p);
         driveInches(80, p);
         turnToDegrees(80, p);
         driveInches(10, p);
         driveSeconds(1.5, p);
-        driveSeconds(0.3, -p);
+        driveSeconds(0.2, -p);
     }
 }
