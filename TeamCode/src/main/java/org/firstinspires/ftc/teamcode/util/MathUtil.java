@@ -14,7 +14,8 @@ public final class MathUtil {
 
     /** Wraps an angle in degrees to [-180, 180). */
     public static double angleWrap(double degrees) {
-        // TODO
+        while (degrees >= 180) degrees -= 360;
+        while (degrees < -180) degrees += 360;
         return degrees;
     }
 }

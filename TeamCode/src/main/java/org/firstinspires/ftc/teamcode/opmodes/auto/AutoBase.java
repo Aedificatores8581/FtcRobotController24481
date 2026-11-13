@@ -2,10 +2,12 @@ package org.firstinspires.ftc.teamcode.opmodes.auto;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.teamcode.LauncherConfig;
 import org.firstinspires.ftc.teamcode.Robot;
 import org.firstinspires.ftc.teamcode.RobotConstants;
+import org.firstinspires.ftc.teamcode.util.MathUtil;
 
 /*
  * Shared setup and step helpers for autonomous routines.
@@ -36,6 +38,17 @@ public abstract class AutoBase extends LinearOpMode {
     private final ElapsedTime matchTimer = new ElapsedTime();
     private boolean overdriveRunning = false;
     private String lastShot = "none";
+
+    // pose saved by markPose(), in odometry inches and degrees
+    private double markX, markY, markHeading;
+
+    // return-to-pose tuning: raise a gain if it is too slow, lower it if it overshoots
+    private static final double POSE_DRIVE_GAIN = 0.05;    // power per inch of error
+    private static final double POSE_TURN_GAIN = 0.02;     // power per degree of error
+    private static final double POSE_MIN_POWER = 0.15;     // so it does not stall near the target
+    private static final double POSE_TOLERANCE_INCHES = 1.0;
+    private static final double POSE_TOLERANCE_DEGREES = 2.0;
+    private static final double POSE_TIMEOUT_SECONDS = 4.0; // give up so we still have time to park
 
     /** Each auto puts its steps here. */
     protected abstract void runRoutine();
@@ -71,6 +84,7 @@ public abstract class AutoBase extends LinearOpMode {
 
     /** Drive in a straight line. Positive power is forward, negative is backward. */
     protected void driveInches(double inches, double power) {
+        log("driveInches " + inches + " at " + power);
         robot.update();
         double startX = robot.odo.getXInches();
         double startY = robot.odo.getYInches();
@@ -85,6 +99,7 @@ public abstract class AutoBase extends LinearOpMode {
 
     /** Turn until the heading passes the target. 0 is straight ahead, positive is left. */
     protected void turnToDegrees(double targetDegrees, double power) {
+        log("turnToDegrees " + targetDegrees + " at " + power);
         robot.update();
         boolean turnLeft = targetDegrees > robot.odo.getHeadingDegrees();
 
@@ -99,12 +114,88 @@ public abstract class AutoBase extends LinearOpMode {
 
     /** Drive for a set time, for example to push into a wall. */
     protected void driveSeconds(double seconds, double power) {
+        log("driveSeconds " + seconds + " at " + power);
         ElapsedTime timer = new ElapsedTime();
         while (!shouldStop() && timer.seconds() < seconds) {
             robot.drive.drive(power, 0, 0);
             tick();
         }
         stopAndPause();
+    }
+
+    // Strafe for a set time, for example to square up on a wall. Positive power is right.
+    protected void strafeSeconds(double seconds, double power) {
+        log("strafeSeconds " + seconds + " at " + power);
+        ElapsedTime timer = new ElapsedTime();
+        while (!shouldStop() && timer.seconds() < seconds) {
+            robot.drive.drive(0, power, 0);
+            tick();
+        }
+        stopAndPause();
+    }
+
+    // Gather balls along the wall. Start pointed at the gather direction (48 in from the wall).
+    // Strafe into the wall to square up, drive 48 in with the intake on, strafe into the wall
+    // again, then drive back to where we started.
+    // wallPower: + if the wall is on the right, - if left.
+    protected void gatherAlongWall(double wallPower) {
+        double p = RobotConstants.AUTO_POWER;
+
+        strafeSeconds(0.5, wallPower);   // square up on the wall
+        robot.intake.on();
+        driveInches(48, p);              // gather
+        robot.intake.off();
+        strafeSeconds(0.5, wallPower);   // square up again
+        driveInches(48, -p);             // back to the start spot
+    }
+
+    // Remember where we are (x, y, heading) so returnToMarkedPose() can come back to it.
+    protected void markPose() {
+        robot.update();
+        markX = robot.odo.getXInches();
+        markY = robot.odo.getYInches();
+        markHeading = robot.odo.getHeadingDegrees();
+        log(String.format("markPose x %.1f y %.1f h %.1f", markX, markY, markHeading));
+    }
+
+    // Drive back to the pose saved by markPose(), including the heading.
+    // Uses odometry, so it fixes any drift from the strafes and the gather.
+    protected void returnToMarkedPose(double maxPower) {
+        log("returnToMarkedPose");
+        ElapsedTime timer = new ElapsedTime();
+        robot.update();
+
+        while (!shouldStop() && timer.seconds() < POSE_TIMEOUT_SECONDS) {
+            double dx = markX - robot.odo.getXInches();
+            double dy = markY - robot.odo.getYInches();
+            double dHeading = MathUtil.angleWrap(markHeading - robot.odo.getHeadingDegrees());
+            double distance = Math.hypot(dx, dy);
+
+            if (distance < POSE_TOLERANCE_INCHES && Math.abs(dHeading) < POSE_TOLERANCE_DEGREES) break;
+
+            // turn the field-frame error into the robot's frame (forward and left)
+            double h = Math.toRadians(robot.odo.getHeadingDegrees());
+            double forward = dx * Math.cos(h) + dy * Math.sin(h);
+            double left = -dx * Math.sin(h) + dy * Math.cos(h);
+
+            double fwdPower = posePower(forward * POSE_DRIVE_GAIN, maxPower);
+            double leftPower = posePower(left * POSE_DRIVE_GAIN, maxPower);
+            double turnLeftPower = posePower(dHeading * POSE_TURN_GAIN, maxPower);
+
+            // drive(): + strafe is right, + turn is clockwise
+            robot.drive.drive(fwdPower, -leftPower, -turnLeftPower);
+            telemetry.addData("Pose error", "%.1f in, %.1f deg", distance, dHeading);
+            tick();
+        }
+        stopAndPause();
+        log(String.format("arrived x %.1f y %.1f h %.1f", robot.odo.getXInches(),
+                robot.odo.getYInches(), robot.odo.getHeadingDegrees()));
+    }
+
+    // Limit to maxPower, but push at least POSE_MIN_POWER unless the error is basically zero
+    private double posePower(double power, double maxPower) {
+        if (Math.abs(power) < 0.001) return 0;
+        return Math.signum(power) * MathUtil.clamp(Math.abs(power), POSE_MIN_POWER, maxPower);
     }
 
     /** Wait while the robot keeps updating (telemetry, odometry). */
@@ -140,6 +231,7 @@ public abstract class AutoBase extends LinearOpMode {
      * Stops early if it's time to park. Turns the flywheel and intake off at the end.
      */
     protected void shoot(int count) {
+        log("shoot " + count);
         robot.launcher.spinUp(); // safe if already spinning
         robot.intake.on();
 
@@ -165,6 +257,13 @@ public abstract class AutoBase extends LinearOpMode {
     }
 
     // ---- Helpers ----
+
+    // Show the step on the driver station and write it to the robot log (Logcat tag: Auto)
+    protected void log(String step) {
+        RobotLog.ii("Auto", "%.1fs left: %s", secondsLeft(), step);
+        telemetry.addData("Step", step);
+        telemetry.update();
+    }
 
     private double distanceFrom(double startX, double startY) {
         return Math.hypot(robot.odo.getXInches() - startX, robot.odo.getYInches() - startY);
