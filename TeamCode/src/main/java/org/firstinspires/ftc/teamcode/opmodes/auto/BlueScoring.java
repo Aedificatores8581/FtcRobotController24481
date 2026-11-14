@@ -46,6 +46,7 @@ public class BlueScoring extends AutoBase {
             log("Gathering along wall");
             gatherAlongWall(WALL_POWER);
             turnToDegrees(0, p);
+            driveInches(4, -p);
             checkAndCorrect();
 
             // look for the tags one more time, only shoot if they are there
