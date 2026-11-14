@@ -11,11 +11,13 @@ public class RedScoring extends AutoBase {
     protected void runRoutine() {
         // give the flywheel time to get up to speed
         robot.launcher.spinUp();
-        waitSeconds(2);
 
-        // only shoot if the hive is tipped
         if (scanForTip(RobotConstants.TAG_RED_SCORING_MIN, RobotConstants.TAG_RED_SCORING_MAX)) {
-            shoot(4);
+            if (!robot.launcher.isReady()) {
+                robot.update(); // updates hardware & avoids blocking
+                sleep(10);
+            }
+            shoot(3);
         }
 
         leaveAndPark();

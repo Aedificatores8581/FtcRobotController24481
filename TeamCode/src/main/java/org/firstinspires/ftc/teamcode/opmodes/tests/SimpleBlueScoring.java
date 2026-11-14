@@ -30,6 +30,6 @@ public class SimpleBlueScoring extends SimpleAutoBase {
         turnToDegrees(80, p);
         driveInches(10, p);
         driveSeconds(1.5, p);
-        driveSeconds(0.3, -p);
+        driveSeconds(0.2, -p);
     }
 }
