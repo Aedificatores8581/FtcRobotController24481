@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.opmodes.tests;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-@Autonomous(name = "Simple BlueScoring", group = "Competition")
+@Autonomous(name = "Simple BlueScoring", group = "Test")
 public class SimpleBlueScoring extends SimpleAutoBase {
 
     @Override

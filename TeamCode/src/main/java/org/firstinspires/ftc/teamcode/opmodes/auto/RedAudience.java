@@ -4,7 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.RobotConstants;
 
-@Autonomous(name = "RedAudience", group = "Main")
+@Autonomous(name = "RedAudience", group = "Comptitaion")
 public class RedAudience extends AutoBase {
 
     @Override

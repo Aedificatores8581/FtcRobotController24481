@@ -143,7 +143,7 @@ public abstract class AutoBase extends LinearOpMode {
         robot.launcher.spinUp(); // safe if already spinning
         robot.intake.on();
 
-        for (int i = 0; i < count && !shouldStop() && !timeToPark(); i++) {
+        for (int i = 0; i <= count && !shouldStop() && !timeToPark(); i++) {
             ElapsedTime readyTimer = new ElapsedTime();
             while (!shouldStop() && !timeToPark() && !robot.launcher.isReady()
                     && readyTimer.seconds() < LauncherConfig.READY_TIMEOUT) {
