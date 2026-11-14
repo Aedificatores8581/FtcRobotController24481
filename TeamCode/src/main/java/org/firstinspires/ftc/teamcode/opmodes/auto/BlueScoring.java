@@ -4,7 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.RobotConstants;
 
-@Autonomous(name = "BlueScoring", group = "Main")
+@Autonomous(name = "BlueScoring", group = "Comptitaion")
 public class BlueScoring extends AutoBase {
 
     @Override

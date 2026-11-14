@@ -6,7 +6,7 @@ import org.firstinspires.ftc.teamcode.LauncherConfig;
 import org.firstinspires.ftc.teamcode.RobotConstants;
 import org.firstinspires.ftc.teamcode.subsystems.Launcher;
 
-@Autonomous(name = "BlueAudience", group = "Main")
+@Autonomous(name = "BlueAudience", group = "Comptitaion")
 public class BlueAudience extends AutoBase {
 
     @Override

@@ -17,10 +17,12 @@ public class LauncherConfig {
 
     public static double TARGET_VELOCITY = 1150;
 
-    public static double AUTO_KP = 130.0;
+
+
+    public static double AUTO_KP = 135.0;
     public static double AUTO_KI = 0.86;
     public static double AUTO_KD = 12.0;
-    public static double AUTO_KF = 150.0;
+    public static double AUTO_KF = 140.0;
     public static double AUTO_TARGET_VELOCITY = 1050;
 
     public static double VELOCITY_TOLERANCE = 50;
