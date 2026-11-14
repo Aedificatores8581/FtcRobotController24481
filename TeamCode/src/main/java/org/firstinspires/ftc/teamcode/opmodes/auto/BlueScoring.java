@@ -12,8 +12,11 @@ public class BlueScoring extends AutoBase {
         // start the flywheel, then scan for the hive tags from the starting position
         robot.launcher.spinUp();
 
-        // tags in view: shoot to tip the hive. Not in view: nothing to shoot at
         if (scanForTip(RobotConstants.TAG_BLUE_SCORING_MIN, RobotConstants.TAG_BLUE_SCORING_MAX)) {
+            if (!robot.launcher.isReady()) {
+                robot.update(); // updates hardware & avoids blocking
+                sleep(10);
+            }
             shoot(3);
         }
 
@@ -28,10 +31,10 @@ public class BlueScoring extends AutoBase {
         turnToDegrees(90, p);
         driveInches(30, p);
         turnToDegrees(0, p);
-        driveInches(79, p);
-        turnToDegrees(80, p);
+        driveInches(81, p);
+        turnToDegrees(70, p);
         driveInches(10, p);
         driveSeconds(1.5, p);
-        driveSeconds(0.3, -p);
+        driveSeconds(0.2, -p);
     }
 }
