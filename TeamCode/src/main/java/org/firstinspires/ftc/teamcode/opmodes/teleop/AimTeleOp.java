@@ -17,7 +17,7 @@ import org.firstinspires.ftc.teamcode.control.AimController;
  * Right trigger (hold): auto-aim at the closest tag cluster. Once lined up, intake and feeder start.
  *   With no tag in view the robot stops (the sticks are ignored while the trigger is held).
  */
-@TeleOp(name = "Aim TeleOp", group = "Competition")
+@TeleOp(name = "Aim TeleOp", group = "CompetitionBackup")
 public class AimTeleOp extends OpMode {
 
     private Robot robot;

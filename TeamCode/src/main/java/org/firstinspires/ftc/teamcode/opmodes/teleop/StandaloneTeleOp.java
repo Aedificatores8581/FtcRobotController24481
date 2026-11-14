@@ -15,7 +15,7 @@ import org.firstinspires.ftc.robotcore.external.JavaUtil;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 
-@TeleOp(name = "Standalone TeleOp", group = "Competition")
+@TeleOp(name = "Standalone TeleOp", group = "CompetitionBackup")
 @Config
 public class StandaloneTeleOp extends LinearOpMode {
 
