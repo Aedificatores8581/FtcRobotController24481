@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.AimConfig;
 import org.firstinspires.ftc.teamcode.RobotConstants;
+import org.firstinspires.ftc.teamcode.util.Alliance;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,6 +21,7 @@ import java.util.List;
  * Aim: the tags are grouped into 4 clusters (one per hive, see RobotConstants.TAG_*). The cluster
  * with the most tags in view wins (ties: closest to center). Its median tx/ty is smoothed over
  * the last few loops, and getAimTx()/getAimTy() return that. Ported from AimTestOdom.
+ * setAimAlliance() limits aiming to one alliance's hives (default: any hive).
  * Status/tx/ty/fiducial telemetry and the FTC Dashboard camera stream live here
  * (ported from the standalone LimelightTest bench OpMode).
  */
@@ -44,6 +46,7 @@ public class Vision implements Subsystem {
     private int historyCount = 0;
     private int selectedCluster = -1;
     private double aimTx, aimTy;    // smoothed
+    private Alliance aimAlliance = null; // null = aim at any hive
 
     public Vision(HardwareMap hardwareMap, Telemetry telemetry) {
         this.hardwareMap = hardwareMap;
@@ -76,6 +79,11 @@ public class Vision implements Subsystem {
         if (hasAimTarget()) {
             telemetry.addData("Aim", "%s  tx %.2f  ty %.2f", getAimClusterName(), aimTx, aimTy);
         }
+    }
+
+    /** Only aim at this alliance's hives. Pass null to aim at any hive (the default). */
+    public void setAimAlliance(Alliance alliance) {
+        aimAlliance = alliance;
     }
 
     /** Tilts the Limelight. Only moves when called, so other OpModes leave the servo alone. */
@@ -113,7 +121,7 @@ public class Vision implements Subsystem {
         double[] txSum = new double[4];
         for (LLResultTypes.FiducialResult fr : tags) {
             int c = clusterOf(fr.getFiducialId());
-            if (c != -1) {
+            if (c != -1 && isAimAllowed(c)) {
                 count[c]++;
                 txSum[c] += fr.getTargetXDegrees();
             }
@@ -174,6 +182,12 @@ public class Vision implements Subsystem {
         }
         aimTx = txTotal / weightTotal;
         aimTy = tyTotal / weightTotal;
+    }
+
+    /** Clusters 0-1 are red, 2-3 are blue. */
+    private boolean isAimAllowed(int cluster) {
+        if (aimAlliance == null) return true;
+        return aimAlliance == Alliance.RED ? cluster <= 1 : cluster >= 2;
     }
 
     /** 0 red scoring, 1 red audience, 2 blue audience, 3 blue scoring, -1 not a hive tag. */
