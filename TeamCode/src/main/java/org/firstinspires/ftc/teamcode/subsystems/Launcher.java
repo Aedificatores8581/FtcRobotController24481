@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.LauncherConfig;
 import org.firstinspires.ftc.teamcode.RobotConstants;
+import org.firstinspires.ftc.teamcode.util.MathUtil;
 
 /*
  * LAUNCHER - flywheel plus the feeder that pushes a piece into it.
@@ -107,6 +108,16 @@ public class Launcher implements Subsystem {
 
     public void retractFeeder() {
         feeder.setPosition(LauncherConfig.FEEDER_REST_POS);
+    }
+
+    /** Moves the feeder from where it was last told to go by delta (0 to 1). Used for dpad fine-tuning. */
+    public void nudgeFeeder(double delta) {
+        feeder.setPosition(MathUtil.clamp(feeder.getPosition() + delta, 0, 1));
+    }
+
+    /** Let the flywheel coast (not brake) when power is zero. Autos don't call this. */
+    public void coastWhenStopped() {
+        flywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
     }
 
     private double targetVelocity() {
