@@ -43,6 +43,14 @@ public abstract class MainTeleOpBase extends LinearOpMode {
         return true;
     }
 
+    private static double deadzone(double v, double dz) {
+        return Math.abs(v) < dz ? 0 : v;
+    }
+
+    private static double clamp1(double v) {
+        return Math.max(-1, Math.min(1, v));
+    }
+
     private String allianceName() {
         return getAlliance() == ALLIANCE_RED ? "RED" : "BLUE";
     }
@@ -74,13 +82,13 @@ public abstract class MainTeleOpBase extends LinearOpMode {
     // ==========================================
     // AUTOMATIC DRIVE SETTINGS
     // ==========================================
-    public static double axialAdjust = -0.7;
-    public static double axialForwardGain = 0.03;
-    public static double maxAutoAxial = 0.5;
+    public static double axialAdjust = 0.9;
+    public static double axialForwardGain = 0.06;
+    public static double maxAutoAxial = 0.7;
 
     public static double yawGain = 0.025;
     public static double rotationVelocityGain = 0.12;
-    public static double maxAutoYaw = 0.5;
+    public static double maxAutoYaw = 0.7;
 
     public static double axialDeadband = 1.0;
     public static double yawDeadband = 0.7;
@@ -98,7 +106,10 @@ public abstract class MainTeleOpBase extends LinearOpMode {
     // Yaw: |tx| < lockYawTolerance
     // Axial: |ty - axialAdjust| < lockAxialTolerance (axialAdjust is where axial drive stops)
     public static double lockYawTolerance = 0.7;
-    public static double lockAxialTolerance = 1.5;
+    public static double lockAxialTolerance = 1;
+
+    // gamepad2 (flight stick) stick deadzone, so a resting axis can't make the robot creep
+    public static double stickDeadzone = 0.05;
 
     private double[] aimYawHistory = new double[SMOOTHING_WINDOW];
     private double[] aimAxialHistory = new double[SMOOTHING_WINDOW];
@@ -257,6 +268,13 @@ public abstract class MainTeleOpBase extends LinearOpMode {
             yawError = 0;
             axialError = 0;
 
+            // Shared "buttons" for both pads:
+            //   gamepad1 left trigger  / gamepad2 dpad_up -> feeder
+            //   gamepad1 right trigger / gamepad2 a       -> auto aim
+            //   gamepad1 right bumper  / gamepad2 b       -> intake toggle
+            boolean feedHeld = gamepad1.left_trigger >= 0.3 || gamepad2.dpad_up;
+            boolean autoAimHeld = gamepad1.right_trigger >= 0.5 || gamepad2.a;
+
             // ==========================================
             // LAUNCHER PIDF
             // ==========================================
@@ -269,13 +287,15 @@ public abstract class MainTeleOpBase extends LinearOpMode {
             // FEEDER
             // ==========================================
 
-            if (gamepad1.left_trigger >= 0.3) {
+            if (feedHeld) {
                 feeder.setPosition(0.04);
             } else {
                 feeder.setPosition(0.3);
             }
 
-            if (gamepad1.dpad_down) {
+            // gamepad2.dpad_up is the feed button, so only gamepad1 gets the
+            // dpad_up nudge; dpad_down nudges on both pads.
+            if (gamepad1.dpad_down || gamepad2.dpad_down) {
                 feeder.setPosition(
                         Math.max(feeder.getPosition() - 0.01, 0)
                 );
@@ -291,11 +311,14 @@ public abstract class MainTeleOpBase extends LinearOpMode {
             // INTAKE
             // ==========================================
 
-            if (gamepad1.rightBumperWasPressed()) {
+            // Read both so each pad's edge flag is consumed every loop
+            boolean intakeToggle1 = gamepad1.rightBumperWasPressed();
+            boolean intakeToggle2 = gamepad2.bWasPressed();
+            if (intakeToggle1 || intakeToggle2) {
                 intakeActive = !intakeActive;
             }
 
-            intake.setPower(intakeActive ? (gamepad1.right_trigger >= 0.5) ? 0.35 : 0.8 : 0);
+            intake.setPower(intakeActive ? autoAimHeld ? 0.35 : 0.8 : 0);
 
             // ==========================================
             // PINPOINT VELOCITY
@@ -318,9 +341,13 @@ public abstract class MainTeleOpBase extends LinearOpMode {
             // MANUAL DRIVE
             // ==========================================
 
-            axial = -gamepad1.left_stick_y;
-            lateral = gamepad1.left_stick_x;
-            yaw = gamepad1.right_stick_x;
+            // Both pads can drive; gamepad2 gets a deadzone.
+            axial = clamp1(-gamepad1.left_stick_y
+                    - deadzone(gamepad2.left_stick_y, stickDeadzone));
+            lateral = clamp1(gamepad1.left_stick_x
+                    + deadzone(gamepad2.left_stick_x, stickDeadzone));
+            yaw = clamp1(gamepad1.right_stick_x
+                    + deadzone(gamepad2.right_stick_x, stickDeadzone));
 
             targetFound = false;
             selectedCluster = -1;
@@ -444,7 +471,7 @@ public abstract class MainTeleOpBase extends LinearOpMode {
                 // AUTOMATIC AIMING
                 // ==========================================
 
-                if (gamepad1.right_trigger >= 0.5) {
+                if (autoAimHeld) {
 
                     yawError =
                             Math.abs(smoothedAimYaw) < yawDeadband
@@ -490,7 +517,7 @@ public abstract class MainTeleOpBase extends LinearOpMode {
             // STOP IF AUTOMATIC AIMING HAS NO TARGET
             // ==========================================
 
-            if (gamepad1.right_trigger >= 0.5 && !targetFound) {
+            if (autoAimHeld && !targetFound) {
                 axial = 0;
                 lateral = 0;
                 yaw = 0;
@@ -545,20 +572,34 @@ public abstract class MainTeleOpBase extends LinearOpMode {
 
             // ==========================================
             // SEND DATA TO SNAPSCRIPT HUD
-            // [heading, autoAim, launcherVel, launcherTarget, yawRateDeg,
-            //  aimLocked, robotConnected, alliance]
+            // [heading, launcherVel, launcherTarget, yawRateDeg, flags,
+            //  forwardVel, rightVel, alliance]
+            //  flags: bit0 autoAim, bit1 aimLocked, bit2 robotConnected
+            //  forwardVel / rightVel are ROBOT-relative m/s (Pinpoint reports
+            //  field-relative, so it is rotated by the heading here)
             // ==========================================
 
             headingDeg = pinpoint.getHeading(AngleUnit.DEGREES);
 
+            double hRad = Math.toRadians(headingDeg);
+            double robotForwardVel = forwardVelocity * Math.cos(hRad)
+                    + sidewaysVelocity * Math.sin(hRad);
+            double robotLeftVel = -forwardVelocity * Math.sin(hRad)
+                    + sidewaysVelocity * Math.cos(hRad);
+
+            int flags = 0;
+            if (autoAimHeld) flags |= 1;
+            if (aimLocked) flags |= 2;
+            flags |= 4;
+
             limelight.updatePythonInputs(new double[]{
                     headingDeg,
-                    gamepad1.right_trigger >= 0.5 ? 1 : 0,
                     launcher.getVelocity(),
                     targetLauncherVelocity,
                     Math.toDegrees(angularVelocity),
-                    aimLocked ? 1 : 0,
-                    1,
+                    flags,
+                    robotForwardVel,
+                    -robotLeftVel,
                     getAlliance()
             });
 
