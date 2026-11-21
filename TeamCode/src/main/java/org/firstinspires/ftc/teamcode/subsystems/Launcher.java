@@ -29,7 +29,7 @@ public class Launcher implements Subsystem {
     private Servo feeder;
 
     private boolean spinning = false;
-    private boolean autoValues = false;
+    private boolean autoValues = true;
 
     public Launcher(HardwareMap hardwareMap, Telemetry telemetry) {
         this.hardwareMap = hardwareMap;
