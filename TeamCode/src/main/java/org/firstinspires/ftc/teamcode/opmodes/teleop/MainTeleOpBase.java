@@ -74,7 +74,7 @@ public abstract class MainTeleOpBase extends LinearOpMode {
     // ==========================================
     // AUTOMATIC DRIVE SETTINGS
     // ==========================================
-    public static double axialAdjust = -0.7;
+    public static double axialAdjust = 0.9;
     public static double axialForwardGain = 0.03;
     public static double maxAutoAxial = 0.5;
 

@@ -14,7 +14,10 @@ public class BlueScoring extends AutoBase {
 
         if (scanForTip(RobotConstants.TAG_BLUE_SCORING_MIN, RobotConstants.TAG_BLUE_SCORING_MAX)) {
             shoot();
+        } else {
+            shoot();
         }
+
 
         leaveAndPark();
     }

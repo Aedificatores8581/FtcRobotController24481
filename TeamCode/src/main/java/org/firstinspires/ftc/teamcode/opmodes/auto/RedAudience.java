@@ -14,6 +14,8 @@ public class RedAudience extends AutoBase {
 
         if (scanForTip(RobotConstants.TAG_RED_AUDIENCE_MIN, RobotConstants.TAG_RED_AUDIENCE_MAX)) {
             shoot();
+        } else {
+            shoot();
         }
 
         leaveAndPark();
