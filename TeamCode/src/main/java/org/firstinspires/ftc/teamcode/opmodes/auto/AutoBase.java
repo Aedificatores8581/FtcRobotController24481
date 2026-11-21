@@ -154,6 +154,7 @@ public abstract class AutoBase extends LinearOpMode {
                 robot.launcher.getVelocity(), readyTimer.seconds());
 
         robot.launcher.feed(); // opens the gate
+        waitSeconds(1);
         robot.intake.on();     // balls launch right away
         waitSeconds(LauncherConfig.SHOOT_TIME);
 
