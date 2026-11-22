@@ -1,8 +1,9 @@
-package org.firstinspires.ftc.teamcode.opmodes.tests;
+package org.firstinspires.ftc.teamcode.opmodes.tests.deprecated;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -16,6 +17,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 // Values below can be changed on FTC Dashboard under SimpleTeleOp.
 @Config
 @TeleOp(name = "Simple TeleOp", group = "Test")
+@Disabled
 public class SimpleTeleOp extends LinearOpMode {
 
     // flywheel speed is in ticks/sec

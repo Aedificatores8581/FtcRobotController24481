@@ -14,7 +14,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.JavaUtil;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit;
 
@@ -68,37 +67,45 @@ public abstract class MainTeleOpBase extends LinearOpMode {
     public static PIDFCoefficients Pidf =
             new PIDFCoefficients(28, 1, 0, 13);
 
-    public static double vel = 1920;
+    public static double vel = 1900;
+
+    public static double LAUNCH_VELOCITY_TOLERANCE = 20;
     public static double position = 0.15;
 
     // ==========================================
     // AUTOMATIC DRIVE SETTINGS
     // ==========================================
-    public static double axialAdjust = -0.7;
-    public static double axialForwardGain = 0.03;
-    public static double maxAutoAxial = 0.5;
+    public static double AXIAL_TARGET_INCHES = 59;
+    // ==========================================
+// AXIAL AUTO-AIM PIDF
+// ==========================================
 
-    public static double yawGain = 0.025;
-    public static double rotationVelocityGain = 0.12;
-    public static double maxAutoYaw = 0.5;
+    public static double AXIAL_P = 0.04;
+    public static double AXIAL_I = 0.0;
+    public static double AXIAL_D = 0.0;
+    public static double AXIAL_F = 0.0;
 
-    public static double axialDeadband = 1.0;
-    public static double yawDeadband = 0.7;
+    public static double MAX_AUTO_AXIAL = 0.5;
+
+    public static final double yawGain = 0.025;
+    public static final double rotationVelocityGain = 0.12;
+    public static final double maxAutoYaw = 0.5;
+
+    public static final double axialDeadband = 1.0;
+    public static final double yawDeadband = 0.7;
+    public static double AIM_TOL = 0.08;
 
     public static final int SMOOTHING_WINDOW = 10;
-    public static double SMOOTHING_ALPHA = 0.2;
-    public static double yawOffsetDegrees = -9.0;
+    public static double SMOOTHING_ALPHA = 0.4;
 
     // Limelight pipeline slot that holds the Python SnapScript
-    public static int pythonPipeline = 3;
+    public static final int pythonPipeline = 3;
     // Ignore Limelight results older than this (ms)
-    public static double maxStalenessMs = 150;
+    public static final double maxStalenessMs = 150;
 
     // "TARGET LOCKED" when the smoothed aim is inside these windows
     // Yaw: |tx| < lockYawTolerance
     // Axial: |ty - axialAdjust| < lockAxialTolerance (axialAdjust is where axial drive stops)
-    public static double lockYawTolerance = 0.7;
-    public static double lockAxialTolerance = 1.5;
 
     private double[] aimYawHistory = new double[SMOOTHING_WINDOW];
     private double[] aimAxialHistory = new double[SMOOTHING_WINDOW];
@@ -147,8 +154,6 @@ public abstract class MainTeleOpBase extends LinearOpMode {
     double aimYaw = 0;
     double aimAxial = 0;
 
-    double targetLauncherVelocity = -1920;
-
     double autoYaw = 0;
     double yawError = 0;
     double axialError = 0;
@@ -161,6 +166,10 @@ public abstract class MainTeleOpBase extends LinearOpMode {
     double targetRangeIn = 0;
     double headingDeg = 0;
     boolean aimLocked = false;
+
+    private double axialIntegral = 0;
+    private double previousAxialError = 0;
+    private long previousAxialTime = 0;
 
     // ==========================================
     // MAIN OP MODE
@@ -252,7 +261,7 @@ public abstract class MainTeleOpBase extends LinearOpMode {
 
         while (opModeIsActive()) {
 
-            targetLauncherVelocity = vel;
+            vel = vel;
             autoYaw = 0;
             yawError = 0;
             axialError = 0;
@@ -295,7 +304,7 @@ public abstract class MainTeleOpBase extends LinearOpMode {
                 intakeActive = !intakeActive;
             }
 
-            intake.setPower(intakeActive ? (gamepad1.right_trigger >= 0.5) ? 0.35 : 0.8 : 0);
+            intake.setPower(intakeActive ? (gamepad1.right_trigger >= 0.5) || (gamepad1.left_trigger >= 0.3) ? 0.35 : 0.8 : 0);
 
             // ==========================================
             // PINPOINT VELOCITY
@@ -362,15 +371,16 @@ public abstract class MainTeleOpBase extends LinearOpMode {
                     // Script reconstructs the cluster CENTER from the known
                     // tag layout, so this is valid even with 1 tag visible
                     aimYaw = py[1];
-                    aimAxial = py[2];
+                    aimAxial = py[5] * 39.37; //Replaced with the inches distance, for more accurate shooting distance.
 
                     clusterTagCount = (int) py[4];
-                    targetRangeIn = py[5] * 39.37;
+                    targetRangeIn = py[5] * 39.37;// inches away
                 }
             }
 
             if (selectedCluster != -1) {
 
+                //Fix yaw mistakes
                 //Fix yaw mistakes
 
                 targetFound = true;
@@ -431,14 +441,15 @@ public abstract class MainTeleOpBase extends LinearOpMode {
                 smoothedAimYaw = yawSum / totalWeight;
                 smoothedAimAxial = axialSum / totalWeight;
 
-                // ==========================================
-                // LOCK CHECK (drives the TARGET LOCKED HUD banner)
-                // ==========================================
+                yawError = smoothedAimYaw;
+                autoYaw =
+                        -yawError * yawGain
+                                - angularVelocity * rotationVelocityGain;
 
-                aimLocked =
-                        Math.abs(smoothedAimYaw) < lockYawTolerance &&
-                                Math.abs(smoothedAimAxial - axialAdjust) < lockAxialTolerance;
-
+                autoYaw = Math.max(
+                        -maxAutoYaw,
+                        Math.min(maxAutoYaw, autoYaw)
+                );
 
                 // ==========================================
                 // AUTOMATIC AIMING
@@ -446,35 +457,51 @@ public abstract class MainTeleOpBase extends LinearOpMode {
 
                 if (gamepad1.right_trigger >= 0.5) {
 
-                    yawError =
-                            Math.abs(smoothedAimYaw) < yawDeadband
-                                    ? 0 : smoothedAimYaw;
+                    // ==========================================
+                    // AXIAL PIDF AUTO AIM
+                    // ==========================================
 
-                    axialError =
-                            Math.abs(smoothedAimAxial) < axialDeadband
-                                    ? 0 : smoothedAimAxial;
+                    axialError = -(AXIAL_TARGET_INCHES - smoothedAimAxial);
 
-                    autoYaw =
-                            -yawError * yawGain
-                                    - angularVelocity * rotationVelocityGain;
+                    long currentAxialTime = System.nanoTime();
 
-                    autoYaw = Math.max(
-                            -maxAutoYaw,
-                            Math.min(maxAutoYaw, autoYaw)
+                    double dt = previousAxialTime == 0
+                            ? 0
+                            : (currentAxialTime - previousAxialTime) / 1e9;
+
+                    if (dt > 0 && dt < 0.1) {
+                        axialIntegral += axialError * dt;
+                    }
+
+                    double axialDerivative = dt > 0
+                            ? (axialError - previousAxialError) / dt
+                            : 0;
+
+                    axial = AXIAL_P * axialError
+                            + AXIAL_I * axialIntegral
+                            + AXIAL_D * axialDerivative
+                            + AXIAL_F;
+
+                    axial = Math.max(
+                            -MAX_AUTO_AXIAL,
+                            Math.min(MAX_AUTO_AXIAL, axial)
                     );
 
-                    axial = (-axialError + axialAdjust) * axialForwardGain;
-
-                    axial = Math.max(-maxAutoAxial, Math.min(maxAutoAxial, axial)
-                    );
+                    previousAxialError = axialError;
+                    previousAxialTime = currentAxialTime;
 
                     yaw = -autoYaw;
 
-                    if ((Math.abs(axial) <= 0.05) && (Math.abs(yaw) <= 0.05)) {
+                    if ((Math.abs(axial) <= AIM_TOL)  &&
+                            (Math.abs(yaw) <= AIM_TOL) &&
+                            (Math.abs(launcher.getVelocity() - vel) <= LAUNCH_VELOCITY_TOLERANCE)) {
                         intakeActive = true;
                         feeder.setPosition(0.04);
+                        aimLocked = true;
                     }
                 }
+
+
             } else {
                 // Reset smoothing when no target is found
                 smoothingIndex = 0;
@@ -487,21 +514,11 @@ public abstract class MainTeleOpBase extends LinearOpMode {
             }
 
             // ==========================================
-            // STOP IF AUTOMATIC AIMING HAS NO TARGET
-            // ==========================================
-
-            if (gamepad1.right_trigger >= 0.5 && !targetFound) {
-                axial = 0;
-                lateral = 0;
-                yaw = 0;
-            }
-
-            // ==========================================
             // LAUNCHER
             // ==========================================
 
-            targetLauncherVelocity = vel;
-            launcher.setVelocity(targetLauncherVelocity);
+            vel = vel;
+            launcher.setVelocity(vel);
 
             // ==========================================
             // DRIVE CALCULATIONS
@@ -551,15 +568,33 @@ public abstract class MainTeleOpBase extends LinearOpMode {
 
             headingDeg = pinpoint.getHeading(AngleUnit.DEGREES);
 
+            // ==========================================
+// SEND DATA TO LIMELIGHT SNAPSCRIPT
+// [heading, launcherVel, launcherTarget,
+//  yawRateDeg, flags, forwardVel, rightVel, alliance]
+// ==========================================
+
+            int flags = 0;
+
+            if (gamepad1.right_trigger >= 0.5) {
+                flags |= 1; // Auto aim active
+            }
+
+            if (aimLocked) {
+                flags |= 2; // Target locked
+            }
+
+            flags |= 4; // Robot connected
+
             limelight.updatePythonInputs(new double[]{
-                    headingDeg,
-                    gamepad1.right_trigger >= 0.5 ? 1 : 0,
-                    launcher.getVelocity(),
-                    targetLauncherVelocity,
-                    Math.toDegrees(angularVelocity),
-                    aimLocked ? 1 : 0,
-                    1,
-                    getAlliance()
+                    headingDeg,                              // [0]
+                    launcher.getVelocity(),                 // [1]
+                    vel,                 // [2]
+                    Math.toDegrees(angularVelocity),         // [3]
+                    flags,                                   // [4]
+                    forwardVelocity,                         // [5]
+                    sidewaysVelocity,                        // [6]
+                    getAlliance()                            // [7]
             });
 
             // ==========================================
@@ -567,29 +602,7 @@ public abstract class MainTeleOpBase extends LinearOpMode {
             // ==========================================
 
             // Limelight / SnapScript
-
-            telemetry.addData(
-                    "Limelight",
-                    "Result: %s | Fresh: %s | Tags: %d | Cluster tags: %d",
-                    result != null,
-                    fresh,
-                    totalTags,
-                    clusterTagCount
-            );
-
-            telemetry.addData(
-                    "Range",
-                    "%.1f in",
-                    targetRangeIn
-            );
-
             // Selected cluster
-
-            telemetry.addData(
-                    "Alliance",
-                    allianceName() + " only"
-            );
-
             telemetry.addData(
                     "Selected Cluster",
                     selectedCluster == -1
@@ -643,13 +656,7 @@ public abstract class MainTeleOpBase extends LinearOpMode {
 
             // Launcher
 
-            telemetry.addData(
-                    "Launcher",
-                    "Target: %.0f | Actual: %.0f | Current: %.0f mA",
-                    targetLauncherVelocity,
-                    launcher.getVelocity(),
-                    launcher.getCurrent(CurrentUnit.MILLIAMPS)
-            );
+            telemetry.addData("LauncherVelocity", launcher.getVelocity());
 
             // Mechanisms
 

@@ -1,8 +1,10 @@
-package org.firstinspires.ftc.teamcode.opmodes.tests;
+package org.firstinspires.ftc.teamcode.opmodes.tests.deprecated;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 @Autonomous(name = "Simple BlueScoring", group = "Test")
+@Disabled
 public class SimpleBlueScoring extends SimpleAutoBase {
 
     @Override
