@@ -67,7 +67,7 @@ public abstract class MainTeleOpBase extends LinearOpMode {
     public static PIDFCoefficients Pidf =
             new PIDFCoefficients(28, 1, 0, 13);
 
-    public static double vel = 1900;
+    public static double vel = 1910;
 
     public static double LAUNCH_VELOCITY_TOLERANCE = 20;
     public static double position = 0.15;
