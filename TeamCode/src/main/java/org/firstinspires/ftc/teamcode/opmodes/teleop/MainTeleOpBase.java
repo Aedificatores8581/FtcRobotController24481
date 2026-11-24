@@ -87,7 +87,7 @@ public abstract class MainTeleOpBase extends LinearOpMode {
     //This function allows FTC Dashboard to order the telemetry correctly
 
     public static double vel = 2000;
-    public static double LAUNCH_INTAKE_SPEED = 0.5;
+    public static double LAUNCH_INTAKE_SPEED = 0.7;
     public static double LAUNCH_VELOCITY_TOLERANCE = 40;
 
     public static int CORRECT_READINGS_BEFORE_SHOOT = 10;
